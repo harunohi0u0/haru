@@ -1535,28 +1535,28 @@
         }
 
         .dark-mode {
-            --bg-primary: #0a0a0a; /* Very dark background, almost black */
-            --bg-secondary: #1c1c1c; /* Dark gray for main content areas (cards, sections) */
-            --bg-tertiary: #2c2c2c; /* Slightly lighter dark gray for sub-sections/hover */
-            --text-primary: #e2e8f0; /* Light text (gray-200) */
-            --text-secondary: #a0aec0; /* Muted light text (gray-400) */
-            --text-heading: #f0f0f0; /* White-ish for headings */
-            --text-link: #81b214; /* A vibrant green for links/accents in dark mode */
-            --border-color: #4c4c4c; /* Darker, subtle border */
-            --shadow-color: rgba(0, 0, 0, 0.7); /* More prominent shadows */
-            --input-bg: #2c2c2c; /* Dark input field background */
-            --input-border: #4c4c4c; /* Dark input field border */
-            --button-primary-bg: #6a994e;
+            --bg-primary: #000000; /* Pure black for body background */
+            --bg-secondary: #1a1a1a; /* Very dark grey for main content areas (cards, sections, header) */
+            --bg-tertiary: #2a2a2a; /* Slightly lighter dark grey for sub-sections/hover/table header */
+            --text-primary: #f0f0f0; /* Very light grey text */
+            --text-secondary: #cccccc; /* Slightly darker light grey for labels, muted text */
+            --text-heading: #ffffff; /* Pure white for headings */
+            --text-link: #98ee2c; /* A vibrant green for links/accents in dark mode */
+            --border-color: #3a3a3a; /* Darker, subtle border */
+            --shadow-color: rgba(0, 0, 0, 0.9); /* More prominent shadows */
+            --input-bg: #2a2a2a; /* Dark input field background */
+            --input-border: #3a3a3a; /* Dark input field border */
+            --button-primary-bg: #6a994e; /* Buttons remain vibrant */
             --button-primary-hover: #5a8542;
             --button-secondary-bg: #f0ad4e;
             --button-secondary-hover: #ec971f;
             --button-danger-bg: #d9534f;
             --button-danger-hover: #c9302c;
-            --chart-bg: #1c1c1c; /* Chart background same as secondary */
-            --chart-grid-color: rgba(255, 255, 255, 0.15); /* Slightly more visible grid */
-            --table-header-bg: #2c2c2c; /* Table header same as tertiary */
-            --table-border-color: #3c3c3c; /* Table border a bit lighter than general border */
-            --table-hover-bg: #2c2c2c; /* Table hover same as tertiary */
+            --chart-bg: #1a1a1a; /* Chart background same as secondary */
+            --chart-grid-color: rgba(255, 255, 255, 0.2); /* More visible grid for dark mode */
+            --table-header-bg: #2a2a2a; /* Table header same as tertiary */
+            --table-border-color: #3a3a3a; /* Table border a bit lighter than general border */
+            --table-hover-bg: #2a2a2a; /* Table hover same as tertiary */
         }
 
         body {
@@ -1572,6 +1572,7 @@
             margin-right: auto;
             background-color: var(--bg-secondary);
             box-shadow: 0 4px 6px var(--shadow-color);
+            border-radius: 0.75rem; /* Ensure container also has rounded corners */
             transition: background-color 0.3s, box-shadow 0.3s;
         }
         section { /* General section styling for background and shadows */
@@ -1649,8 +1650,8 @@
         .input-group textarea:focus,
         .input-group input[type="date"]:focus {
             outline: none;
-            border-color: var(--text-link); /* Accent blue */
-            box-shadow: 0 0 0 3px rgba(160, 196, 255, 0.2); /* Keep light blue shadow for focus */
+            border-color: var(--text-link); /* Accent link color */
+            box-shadow: 0 0 0 3px rgba(152, 238, 44, 0.2); /* A light green shadow for focus */
         }
         .btn-primary {
             background-color: var(--button-primary-bg);
@@ -1714,7 +1715,7 @@
             box-shadow: 0 2px 4px var(--shadow-color);
         }
         .dark-mode #darkModeToggle {
-            background-color: var(--button-primary-bg); /* Dark mode specific button color */
+            background-color: var(--button-primary-bg); /* Dark mode specific button color, but kept same for consistency */
         }
         #darkModeToggle:hover {
             background-color: var(--button-primary-hover);
@@ -1814,7 +1815,7 @@
         <div id="statusMessage" class="status-message hidden"></div>
         <div id="loadingSpinner" class="loading-spinner mx-auto hidden"></div>
 
-        <section id="trade-entry" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
+        <section id="trade-entry" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">새로운 매매 기록하기</h2>
             <p class="text-sm mb-6">이 섹션에서 당신의 매매에 대한 모든 세부 정보를 입력할 수 있습니다. 각 필드를 채우고, 해당되는 심리 태그와 진입 근거를 선택한 다음, 매매 결과를 기록하여 당신의 트레이딩 데이터를 축적하세요. 이미 기록된 매매를 수정하려면 아래 '매매 기록 히스토리'에서 '수정' 버튼을 클릭하세요.</p>
 
@@ -1828,7 +1829,7 @@
                             <input type="date" id="date" class="w-full rounded-md p-2">
                         </div>
                         <div class="input-group">
-                            <label for="stockName" class="block text-sm mb-1">종목명</label>
+                            <label for="stockName" class="block text-sm mb-1">종목명</labe>
                             <input type="text" id="stockName" class="w-full rounded-md p-2" placeholder="예: 삼성전자" required>
                         </div>
                         <div class="input-group flex items-center space-x-4">
@@ -1975,7 +1976,7 @@
             </form>
         </section>
 
-        <section id="tag-management" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
+        <section id="tag-management" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">태그 관리</h2>
             <p class="text-sm mb-6">매매 기록에 사용할 심리 태그와 진입 근거를 직접 추가하거나 삭제할 수 있습니다. 추가된 태그는 모든 매매 기록에 즉시 반영됩니다.</p>
 
@@ -2026,7 +2027,7 @@
             </div>
         </section>
 
-        <section id="trade-history" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
+        <section id="trade-history" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 기록 히스토리</h2>
             <p class="text-sm mb-6">여기에 당신이 기록한 모든 매매 내역이 최신순으로 표시됩니다. 각 매매의 주요 정보를 한눈에 확인하고, 전체적인 흐름을 파악할 수 있습니다. '수정' 버튼을 클릭하여 진행 중인 매매를 업데이트하거나 완료할 수 있습니다.</p>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
@@ -2046,20 +2047,20 @@
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">액션</th>
                         </tr>
                     </thead>
-                    <tbody id="tradeHistoryBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody id="tradeHistoryBody">
                         <!-- Trade entries will be dynamically inserted here -->
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <section id="analysis-dashboard" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
+        <section id="analysis-dashboard" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 분석 대시보드</h2>
             <p class="text-sm mb-6">기록된 매매 데이터를 바탕으로 당신의 트레이딩 패턴과 심리, 진입 근거의 영향을 시각적으로 분석합니다. 차트를 통해 어떤 요소들이 당신의 매매 결과에 영향을 미치는지 파악하고 개선점을 찾을 수 있습니다.</p>
 
             <div class="grid grid-cols-1 gap-8"> <!-- Changed to single column grid -->
                 <!-- Overall Performance -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 flex flex-col items-center justify-center text-center">
+                <div class="rounded-xl shadow p-6 flex flex-col items-center justify-center text-center">
                     <h3 class="text-xl font-medium mb-4">전체 매매 성과 요약</h3>
                     <p class="text-sm mb-4">당신의 전체 매매 기록에 대한 핵심 지표를 확인하세요.</p>
                     <div class="flex flex-col sm:flex-row gap-6 text-2xl font-bold">
@@ -2113,7 +2114,7 @@
         </section>
 
         <!-- New Section: Performance Reports -->
-        <section id="performance-reports" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
+        <section id="performance-reports" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">성과 보고서</h2>
             <p class="text-sm mb-6">월별 또는 분기별로 당신의 매매 성과를 요약하여 확인하세요.</p>
 
@@ -2139,7 +2140,7 @@
                 </div>
             </div>
 
-            <div id="reportDisplay" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <div id="reportDisplay" class="rounded-xl shadow p-6">
                 <h3 class="text-xl font-medium mb-4">선택 기간 성과 요약</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="dark:text-gray-200"><strong>총 매매:</strong> <span id="reportTotalTrades">0</span></div>
@@ -2153,13 +2154,13 @@
     </div>
 
     <!-- Custom Confirmation Modal -->
-    <div id="confirmModalOverlay" class="modal-overlay hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-        <div class="modal-content bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-auto">
+    <div id="confirmModalOverlay" class="modal-overlay hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="modal-content rounded-lg shadow-xl p-6 w-full max-w-sm mx-auto">
             <div class="modal-header flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold">매매 기록 삭제 확인</h3>
-                <button id="confirmModalClose" class="modal-close text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+                <button id="confirmModalClose" class="modal-close text-2xl leading-none">&times;</button>
             </div>
-            <p class="mb-6 text-gray-700">정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+            <p class="mb-6">정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
             <div class="flex justify-end gap-3">
                 <button id="cancelDelete" class="btn-secondary px-4 py-2">취소</button>
                 <button id="confirmDelete" class="btn-danger px-4 py-2">삭제</button>
