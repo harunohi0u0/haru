@@ -62,9 +62,6 @@
             "목표가 미흡/비현실적", "외부 뉴스 영향 받음", "시스템 외 매매", "손절가 이탈 미준수"
         ];
 
-        // 고정 환율 (예시 값) - 이제는 입력 필드의 값을 사용
-        // const USD_TO_KRW_RATE = 1350;
-
         // Google 인증 공급자 설정
         const googleProvider = new GoogleAuthProvider();
         window.signInWithGoogle = async function() {
@@ -735,6 +732,16 @@
             return lines;
         }
 
+        // Helper function to format numbers with commas
+        function formatNumberWithCommas(number) {
+            if (number === null || isNaN(number)) {
+                return '-';
+            }
+            // For PNL, we need to ensure it's a number, then format
+            const num = parseFloat(number);
+            return num.toLocaleString('en-US'); // 'en-US' uses comma as thousands separator
+        }
+
         // Initialize Charts (This function needs to be defined BEFORE it's called in window.onload)
         function initializeCharts() {
             // Common options for bar charts (Psychology Impact, Entry Basis Effectiveness)
@@ -990,7 +997,7 @@
 
             // Overall Performance
             const totalTrades = completedTrades.length;
-            document.getElementById('totalTrades').textContent = totalTrades;
+            document.getElementById('totalTrades').textContent = formatNumberWithCommas(totalTrades); // Apply comma formatting
 
             const winTrades = completedTrades.filter(t => t.resultOutcome === '수익').length;
             const winRate = totalTrades > 0 ? (winTrades / totalTrades * 100).toFixed(2) : 0;
@@ -998,7 +1005,7 @@
 
             const totalRR = completedTrades.reduce((sum, t) => sum + (parseFloat(t.rRatio) || 0), 0);
             const avgRR = totalTrades > 0 ? (totalRR / totalTrades).toFixed(2) : 0;
-            document.getElementById('avgRR').textContent = avgRR;
+            document.getElementById('avgRR').textContent = formatNumberWithCommas(avgRR); // Apply comma formatting
 
             // Result Breakdown Chart
             const resultCounts = { '수익': 0, '손절': 0, '본절': 0, '진행 중': 0 };
@@ -1145,6 +1152,18 @@
                     holdingPeriod = '진행 중';
                 }
 
+                let displayPnl = '-';
+                if (trade.pnlAmount !== null && trade.pnlAmount !== undefined) {
+                    let pnlUsd = parseFloat(trade.pnlAmount);
+                    const currentExchangeRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1350;
+
+                    if (trade.pnlCurrency === 'KRW') {
+                        pnlUsd = pnlUsd / currentExchangeRate;
+                    }
+                    displayPnl = `${formatNumberWithCommas(pnlUsd.toFixed(2))} $`;
+                }
+
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.date}</td>
@@ -1156,6 +1175,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
                     <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
                     <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editTrade('${trade.id}')" class="text-indigo-600 hover:text-indigo-900 ml-2 dark:text-indigo-400 dark:hover:text-indigo-200">수정</button>
                         <button onclick="showConfirmModal('${trade.id}')" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
@@ -1421,9 +1441,9 @@
 
         function updateReports() {
             if (!window.trades || window.trades.length === 0) {
-                document.getElementById('reportTotalTrades').textContent = '0';
+                document.getElementById('reportTotalTrades').textContent = formatNumberWithCommas(0);
                 document.getElementById('reportWinRate').textContent = '0.00%';
-                document.getElementById('reportAvgRR').textContent = '0.00';
+                document.getElementById('reportAvgRR').textContent = formatNumberWithCommas(0);
                 document.getElementById('reportTotalUSDPNL').textContent = '0.00 $'; // Updated ID
                 document.getElementById('reportTotalKRWPNL').textContent = '0.00 ₩'; // Updated ID
                 return;
@@ -1479,11 +1499,11 @@
             });
 
 
-            document.getElementById('reportTotalTrades').textContent = totalTrades;
+            document.getElementById('reportTotalTrades').textContent = formatNumberWithCommas(totalTrades);
             document.getElementById('reportWinRate').textContent = `${totalTrades > 0 ? (winTrades / totalTrades * 100).toFixed(2) : 0.00}%`;
-            document.getElementById('reportAvgRR').textContent = `${totalTrades > 0 ? (totalRR / totalTrades).toFixed(2) : 0.00}`;
-            document.getElementById('reportTotalUSDPNL').textContent = `${totalUSDPNL.toFixed(2)} $`; // Format with USD
-            document.getElementById('reportTotalKRWPNL').textContent = `${totalKRWPNL.toFixed(2)} ₩`; // Format with KRW
+            document.getElementById('reportAvgRR').textContent = formatNumberWithCommas(totalTrades > 0 ? (totalRR / totalTrades).toFixed(2) : 0.00);
+            document.getElementById('reportTotalUSDPNL').textContent = `${formatNumberWithCommas(totalUSDPNL.toFixed(2))} $`; // Format with USD
+            document.getElementById('reportTotalKRWPNL').textContent = `${formatNumberWithCommas(totalKRWPNL.toFixed(2))} ₩`; // Format with KRW
         }
 
     </script>
@@ -2019,6 +2039,7 @@
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">손익비</th>
                             <th class="px-6 py-4 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">심리 태그</th>
                             <th class="px-6 py-4 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">진입 근거</th>
+                            <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">순손익 (USD)</th> <!-- ADDED NEW TH -->
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">액션</th>
                         </tr>
                     </thead>
@@ -2110,7 +2131,7 @@
 
                 <!-- Exchange Rate Input -->
                 <div class="input-group flex items-center gap-2 ml-auto">
-                    <label for="exchangeRateInput" class="text-sm font-medium whitespace-nowrap">현재 환율 (1 USD = ? KRW):</label>
+                    <label for="exchangeRateInput" class="text-sm font-medium whitespace-nowrap dark:text-gray-300">현재 환율 (1 USD = ? KRW):</label>
                     <input type="number" id="exchangeRateInput" class="w-24 rounded-md p-2" value="1350" step="0.01">
                 </div>
             </div>
@@ -2118,11 +2139,11 @@
             <div id="reportDisplay" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                 <h3 class="text-xl font-medium mb-4">선택 기간 성과 요약</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><strong>총 매매:</strong> <span id="reportTotalTrades">0</span></div>
-                    <div><strong>승률:</strong> <span id="reportWinRate">0.00%</span></div>
-                    <div><strong>평균 손익비:</strong> <span id="reportAvgRR">0.00</span></div>
-                    <div><strong>총 달러 수익:</strong> <span id="reportTotalUSDPNL">0.00 $</span></div>
-                    <div><strong>총 원화 수익:</strong> <span id="reportTotalKRWPNL">0.00 ₩</span></div>
+                    <div class="dark:text-gray-200"><strong>총 매매:</strong> <span id="reportTotalTrades">0</span></div>
+                    <div class="dark:text-gray-200"><strong>승률:</strong> <span id="reportWinRate">0.00%</span></div>
+                    <div class="dark:text-gray-200"><strong>평균 손익비:</strong> <span id="reportAvgRR">0.00</span></div>
+                    <div class="dark:text-gray-200"><strong>총 달러 수익:</strong> <span id="reportTotalUSDPNL">0.00 $</span></div>
+                    <div class="dark:text-gray-200"><strong>총 원화 수익:</strong> <span id="reportTotalKRWPNL">0.00 ₩</span></div>
                 </div>
             </div>
         </section>
