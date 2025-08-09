@@ -541,7 +541,7 @@
             window.customSuccessFactorsTags.forEach(tag => {
                 const span = document.createElement('span');
                 span.className = "inline-flex items-center bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2 mb-2 dark:bg-purple-900 dark:text-purple-200";
-                span.innerHTML = `${tag} <button onclick="deleteCustomTag('successFactors', '${tag}')" class="ml-1 text-purple-600 hover:text-purple-900 dark:text-purple-300 dark:hover:text-purple-500 font-bold leading-none">&times;</button>`;
+                span.innerHTML = `${tag} <button onclick="deleteCustomTag('successFactors', '${tag}')" class="ml-1 text-purple-600 hover:text-purple-900 dark:text-purple-300 dark:hover:text-purple-500 font-bold leading-none">&times;</button`;
                 if (successFactorsTagsDisplay) successFactorsTagsDisplay.appendChild(span);
             });
 
@@ -1165,6 +1165,8 @@
 
 
                 const row = document.createElement('tr');
+                // Removed all Tailwind bg-white, dark:bg-gray-800, divide-gray-200, dark:divide-gray-700 classes from table and cells
+                // Replaced with custom CSS for table borders and cell colors
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.date}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.exitDate || '-'}</td>
@@ -1739,7 +1741,7 @@
         td {
             padding: 0.75rem;
             text-align: left;
-            border-bottom: 1px solid var(--table-border-color);
+            border-bottom: 1px solid var(--table-border-color); /* Use custom variable for border-bottom */
             color: var(--text-primary);
             transition: border-color 0.3s, color 0.3s;
         }
@@ -1748,7 +1750,7 @@
             transition: background-color 0.3s;
         }
         .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.8); /* Slightly darker overlay for dark mode */
+            background-color: rgba(0, 0, 0, 0.9); /* More opaque black for modal overlay */
         }
         .modal-content {
             background-color: var(--bg-secondary);
@@ -2031,7 +2033,7 @@
             <h2 class="text-2xl font-semibold mb-6">매매 기록 히스토리</h2>
             <p class="text-sm mb-6">여기에 당신이 기록한 모든 매매 내역이 최신순으로 표시됩니다. 각 매매의 주요 정보를 한눈에 확인하고, 전체적인 흐름을 파악할 수 있습니다. '수정' 버튼을 클릭하여 진행 중인 매매를 업데이트하거나 완료할 수 있습니다.</p>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table class="min-w-full">
                     <thead class="bg-gray-100 dark:bg-gray-800">
                         <tr>
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">진입 날짜</th>
