@@ -564,58 +564,97 @@
 
         // 차트 색상 업데이트 함수 (다크 모드 전환 시 호출)
         function updateChartColors(isDarkMode) {
-            const textColor = isDarkMode ? 'var(--text-primary)' : 'var(--text-primary)';
-            const gridColor = isDarkMode ? 'var(--chart-grid-color)' : 'var(--chart-grid-color)';
-            const tooltipFontColor = isDarkMode ? '#1a1a1a' : '#ffffff'; // Ensure tooltip text contrasts with its background
-            const tooltipBgColor = isDarkMode ? '#e2e8f0' : 'rgba(0, 0, 0, 0.8)'; // Ensure tooltip background contrasts
+            const textColor = isDarkMode ? 'var(--text-primary)' : '#333'; // Explicitly use a dark color for light mode, light for dark
+            const gridColor = isDarkMode ? 'var(--chart-grid-color)' : 'rgba(0, 0, 0, 0.1)';
+            const tooltipFontColor = isDarkMode ? '#1a1a1a' : '#ffffff';
+            const tooltipBgColor = isDarkMode ? '#e2e8f0' : 'rgba(0, 0, 0, 0.8)';
 
-            // Common scale options (for bar charts)
-            const commonScalesOptions = {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        color: textColor, // Y축 텍스트 색상
-                        callback: function(value) {
-                            return value + '%';
+            // Set global Chart.js default font color
+            Chart.defaults.color = textColor; // For general text like axis labels, legends
+            Chart.defaults.font.family = 'Inter, sans-serif'; // Maintain font consistency
+
+            // Common scale options for bar charts and horizontal bar charts
+            const commonScalesOptions = (isVertical = true) => ({
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { size: 12 },
+                            color: textColor // Use dynamic text color
                         }
                     },
-                    grid: {
-                        color: gridColor // Y축 그리드 색상
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                return isVertical ? `${label}${context.parsed.y.toFixed(2)}%` : `${label}${context.parsed.x}`;
+                            }
+                        }
                     }
                 },
-                x: {
-                    ticks: {
-                        color: textColor, // X축 텍스트 색상
-                        callback: function(value, index, values) {
-                            return wrapLabel(this.getLabelForValue(value), 16);
+                scales: {
+                    [isVertical ? 'y' : 'x']: { // Y-axis for vertical, X-axis for horizontal
+                        beginAtZero: true,
+                        max: isVertical ? 100 : undefined, // Only for percentage charts
+                        ticks: {
+                            color: textColor,
+                            callback: isVertical ? function(value) { return value + '%'; } : undefined,
+                            precision: isVertical ? undefined : 0
                         },
-                        autoSkip: false,
-                        maxRotation: 45,
-                        minRotation: 0
+                        grid: {
+                            display: true,
+                            drawBorder: false,
+                            color: gridColor
+                        }
                     },
-                    grid: {
-                        color: gridColor // X축 그리드 색상
+                    [isVertical ? 'x' : 'y']: { // X-axis for vertical, Y-axis for horizontal
+                        ticks: {
+                            color: textColor,
+                            callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), isVertical ? 16 : 25); },
+                            autoSkip: false,
+                            maxRotation: isVertical ? 45 : 0,
+                            minRotation: 0
+                        },
+                        grid: {
+                            display: false
+                        }
                     }
+                },
+                layout: {
+                    padding: { left: 20, right: 20, top: 20, bottom: 20 }
                 }
-            };
-            
+            });
+
             // Result Breakdown Chart (Doughnut)
-            if (resultBreakdownChart && resultBreakdownChart.options && resultBreakdownChart.options.plugins && resultBreakdownChart.options.plugins.legend && resultBreakdownChart.options.plugins.legend.labels) {
+            if (resultBreakdownChart) {
                 resultBreakdownChart.options.plugins.legend.labels.color = textColor;
+                resultBreakdownChart.update();
             }
 
             // Bar Charts
             if (psychologyImpactChart) {
-                psychologyImpactChart.options.scales = JSON.parse(JSON.stringify(commonScalesOptions)); // Deep copy
+                psychologyImpactChart.options.scales = commonScalesOptions(true).scales; // Update scales dynamically
+                psychologyImpactChart.update();
             }
             if (entryBasisEffectivenessChart) {
-                entryBasisEffectivenessChart.options.scales = JSON.parse(JSON.stringify(commonScalesOptions)); // Deep copy
+                entryBasisEffectivenessChart.options.scales = commonScalesOptions(true).scales; // Update scales dynamically
+                entryBasisEffectivenessChart.update();
+            }
+            if (successFactorChart) {
+                successFactorChart.options.scales = commonScalesOptions(false).scales; // Update scales dynamically (horizontal)
+                successFactorChart.update();
+            }
+            if (failureFactorChart) {
+                failureFactorChart.options.scales = commonScalesOptions(false).scales; // Update scales dynamically (horizontal)
+                failureFactorChart.update();
             }
             
 
             // Chart tooltip text color update
-            [resultBreakdownChart, psychologyImpactChart, entryBasisEffectivenessChart, successFactorChart, failureFactorChart].forEach(chart => { // Added new charts
+            [resultBreakdownChart, psychologyImpactChart, entryBasisEffectivenessChart, successFactorChart, failureFactorChart].forEach(chart => {
                 if (chart && chart.options && chart.options.plugins && chart.options.plugins.tooltip) {
                     chart.options.plugins.tooltip.titleColor = tooltipFontColor;
                     chart.options.plugins.tooltip.bodyColor = tooltipFontColor;
@@ -624,13 +663,6 @@
                     chart.options.plugins.tooltip.borderWidth = 1;
                 }
             });
-
-            // Update all charts
-            if (resultBreakdownChart) resultBreakdownChart.update();
-            if (psychologyImpactChart) psychologyImpactChart.update();
-            if (entryBasisEffectivenessChart) entryBasisEffectivenessChart.update();
-            if (successFactorChart) successFactorChart.update(); // Added
-            if (failureFactorChart) failureFactorChart.update(); // Added
         }
 
 
@@ -744,32 +776,24 @@
 
         // Initialize Charts (This function needs to be defined BEFORE it's called in window.onload)
         function initializeCharts() {
-            // Common options for bar charts (Psychology Impact, Entry Basis Effectiveness)
-            const commonBarChartOptions = {
+            // Common options for vertical bar charts (Psychology Impact, Entry Basis Effectiveness)
+            const commonVerticalBarChartOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'top',
                         labels: {
-                            font: {
-                                size: 12
-                            },
-                            color: 'var(--text-primary)'
+                            font: { size: 12 },
+                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
                         }
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== undefined) {
-                                    label += context.parsed.y.toFixed(2) + '%'; // For percentage charts
-                                } else if (context.parsed.x !== undefined) {
-                                    label += context.parsed.x; // For horizontal bar charts (e.g., factor counts)
-                                }
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== undefined) { label += context.parsed.y.toFixed(2) + '%'; }
                                 return label;
                             }
                         }
@@ -780,36 +804,30 @@
                         beginAtZero: true,
                         max: 100,
                         ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            },
-                            color: 'var(--text-primary)'
+                            callback: function(value) { return value + '%'; },
+                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
                         },
                         grid: {
                             display: true,
                             drawBorder: false,
-                            color: 'var(--chart-grid-color)'
+                            color: 'var(--chart-grid-color)' // Will be dynamically set by updateChartColors
                         }
                     },
                     x: {
                         ticks: {
-                            color: 'var(--text-primary)',
-                            callback: function(value, index, values) {
-                                return wrapLabel(this.getLabelForValue(value), 16);
-                            },
+                            color: 'var(--text-primary)', // Will be dynamically set by updateChartColors
+                            callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), 16); },
                             autoSkip: false,
                             maxRotation: 45,
                             minRotation: 0
                         },
                         grid: {
-                            color: 'var(--chart-grid-color)'
+                            display: false
                         }
                     }
                 },
                 layout: {
-                    padding: {
-                        left: 20, right: 20, top: 20, bottom: 20
-                    }
+                    padding: { left: 20, right: 20, top: 20, bottom: 20 }
                 }
             };
 
@@ -823,16 +841,14 @@
                         display: false, // No legend needed if only one dataset per chart
                         labels: {
                             font: { size: 12 },
-                            color: 'var(--text-primary)'
+                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
                         }
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
+                                if (label) { label += ': '; }
                                 label += context.parsed.x; // Value is on x-axis for horizontal bar
                                 return label;
                             }
@@ -844,18 +860,16 @@
                         beginAtZero: true,
                         ticks: {
                             precision: 0,
-                            color: 'var(--text-primary)'
+                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
                         },
                         grid: {
-                            color: 'var(--chart-grid-color)'
+                            color: 'var(--chart-grid-color)' // Will be dynamically set by updateChartColors
                         }
                     },
                     y: {
                         ticks: {
-                            color: 'var(--text-primary)',
-                            callback: function(value, index, values) {
-                                return wrapLabel(this.getLabelForValue(value), 25);
-                            },
+                            color: 'var(--text-primary)', // Will be dynamically set by updateChartColors
+                            callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), 25); },
                             autoSkip: false,
                             maxRotation: 0,
                             minRotation: 0
@@ -866,9 +880,7 @@
                     }
                 },
                 layout: {
-                    padding: {
-                        left: 20, right: 20, top: 20, bottom: 20
-                    }
+                    padding: { left: 20, right: 20, top: 20, bottom: 20 }
                 }
             };
 
@@ -891,10 +903,8 @@
                         legend: {
                             position: 'top',
                             labels: {
-                                font: {
-                                    size: 12
-                                },
-                                color: 'var(--text-primary)' // Dynamic text color
+                                font: { size: 12 },
+                                color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
                             }
                         },
                         tooltip: {
@@ -910,12 +920,7 @@
                         }
                     },
                     layout: {
-                        padding: { // 도넛 차트 패딩 추가
-                            left: 10,
-                            right: 10,
-                            top: 10,
-                            bottom: 10
-                        }
+                        padding: { left: 10, right: 10, top: 10, bottom: 10 }
                     }
                 }
             });
@@ -933,7 +938,7 @@
                         borderWidth: 1
                     }]
                 },
-                options: commonBarChartOptions
+                options: commonVerticalBarChartOptions
             });
 
             const entryBasisEffectivenessCtx = document.getElementById('entryBasisEffectivenessChart').getContext('2d');
@@ -949,7 +954,7 @@
                         borderWidth: 1
                     }]
                 },
-                options: commonBarChartOptions
+                options: commonVerticalBarChartOptions
             });
 
             // New chart for Success Factors
@@ -966,7 +971,7 @@
                         borderWidth: 1
                     }]
                 },
-                options: commonHorizontalBarChartOptions // Use common options for horizontal bar
+                options: commonHorizontalBarChartOptions
             });
 
             // New chart for Failure Factors
@@ -983,7 +988,7 @@
                         borderWidth: 1
                     }]
                 },
-                options: commonHorizontalBarChartOptions // Use common options for horizontal bar
+                options: commonHorizontalBarChartOptions
             });
         }
 
@@ -1544,10 +1549,11 @@
             --text-secondary: #cccccc; /* Slightly darker light grey for labels, muted text */
             --text-heading: #ffffff; /* Pure white for headings */
             --text-link: #98ee2c; /* A vibrant green for links/accents in dark mode */
-            --border-color: var(--bg-primary); /* Darker, subtle border, now pure black */
+
+            --border-color: var(--bg-secondary); /* Border color matching section background for invisibility */
             --shadow-color: rgba(0, 0, 0, 0.9); /* More prominent shadows */
             --input-bg: var(--bg-tertiary); /* Dark input field background */
-            --input-border: var(--bg-primary); /* Dark input field border, now pure black */
+            --input-border: var(--bg-tertiary); /* Input border matching input background for invisibility */
             --button-primary-bg: #6a994e; /* Buttons remain vibrant */
             --button-primary-hover: #5a8542;
             --button-secondary-bg: #f0ad4e;
@@ -1557,7 +1563,7 @@
             --chart-bg: var(--bg-secondary); /* Chart background same as secondary */
             --chart-grid-color: rgba(255, 255, 255, 0.2); /* More visible grid for dark mode */
             --table-header-bg: var(--bg-tertiary); /* Table header same as tertiary */
-            --table-border-color: var(--bg-primary); /* Table border a bit lighter than general border, now pure black */
+            --table-border-color: var(--bg-secondary); /* Table border matching table body background for invisibility */
             --table-hover-bg: var(--bg-tertiary); /* Table hover same as tertiary */
         }
 
@@ -1943,7 +1949,7 @@
                             <div class="checkbox-group mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2"> 
                                 <div id="successFactorsCheckboxes" class="contents"> 
                                     <!-- Success factors will be dynamically inserted here by JS -->
-                                </div>
+                                }
                             </div>
 
                             <!-- b-2 실패 요인 진단 (Dynamic content only) -->
