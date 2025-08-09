@@ -260,6 +260,7 @@
                 }
                 renderTagCheckboxes();
                 renderTagManagementSections();
+                updateDashboard(); // ADDED: Update dashboard after custom tags are loaded/changed
             }, (error) => {
                 console.error("사용자 정의 태그 로드 실패:", error);
                 document.getElementById('statusMessage').textContent = '사용자 정의 태그 로드 실패: ' + error.message;
