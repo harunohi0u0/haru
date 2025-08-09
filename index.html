@@ -503,7 +503,7 @@
             window.customFailureFactorsTags.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`;
+                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${tag}`;
                 failureFactorsContainer.appendChild(label);
             });
             failureFactorsContainer.appendChild(document.createElement('div')).className = "mb-4 col-span-full"; // Added col-span-full
@@ -566,7 +566,7 @@
         function updateChartColors(isDarkMode) {
             const textColor = isDarkMode ? 'var(--text-primary)' : 'var(--text-primary)';
             const gridColor = isDarkMode ? 'var(--chart-grid-color)' : 'var(--chart-grid-color)';
-            const tooltipFontColor = isDarkMode ? '#1a202c' : '#ffffff'; // Ensure tooltip text contrasts with its background
+            const tooltipFontColor = isDarkMode ? '#1a1a1a' : '#ffffff'; // Ensure tooltip text contrasts with its background
             const tooltipBgColor = isDarkMode ? '#e2e8f0' : 'rgba(0, 0, 0, 0.8)'; // Ensure tooltip background contrasts
 
             // Common scale options (for bar charts)
@@ -1535,28 +1535,28 @@
         }
 
         .dark-mode {
-            --bg-primary: #1a202c; /* Dark background (gray-900) */
-            --bg-secondary: #2d3748; /* Dark card/container background (gray-800) */
-            --bg-tertiary: #4a5568; /* Dark section/hover background (gray-700) */
-            --text-primary: #e2e8f0; /* Light text color (gray-200) */
-            --text-secondary: #a0aec0; /* Muted light text color (gray-400) */
-            --text-heading: #e2e8f0; /* Heading color in dark mode (gray-200) */
-            --text-link: #a0c4ff; /* Accent blue for dark mode */
-            --border-color: #4a5568; /* Dark border color (gray-700) */
-            --shadow-color: rgba(0, 0, 0, 0.5); /* Stronger shadow in dark mode */
-            --input-bg: #2d3748; /* Dark input field background (gray-800) */
-            --input-border: #4a5568; /* Dark input field border (gray-700) */
-            --button-primary-bg: #5a8542; /* Darker green for dark mode */
-            --button-primary-hover: #4a743b;
-            --button-secondary-bg: #d99436; /* Darker orange for dark mode */
-            --button-secondary-hover: #c2832a;
-            --button-danger-bg: #c9302c; /* Darker red for dark mode */
-            --button-danger-hover: #b02a27;
-            --chart-bg: #2d3748; /* Dark chart background (gray-800) */
-            --chart-grid-color: rgba(255, 255, 255, 0.1); /* Lighter grid for dark mode */
-            --table-header-bg: #1f2937; /* Darker gray for table header */
-            --table-border-color: #374151; /* Darker gray for table border */
-            --table-hover-bg: #4a5568; /* Darker gray for table hover */
+            --bg-primary: #0a0a0a; /* Very dark background, almost black */
+            --bg-secondary: #1c1c1c; /* Dark gray for main content areas (cards, sections) */
+            --bg-tertiary: #2c2c2c; /* Slightly lighter dark gray for sub-sections/hover */
+            --text-primary: #e2e8f0; /* Light text (gray-200) */
+            --text-secondary: #a0aec0; /* Muted light text (gray-400) */
+            --text-heading: #f0f0f0; /* White-ish for headings */
+            --text-link: #81b214; /* A vibrant green for links/accents in dark mode */
+            --border-color: #4c4c4c; /* Darker, subtle border */
+            --shadow-color: rgba(0, 0, 0, 0.7); /* More prominent shadows */
+            --input-bg: #2c2c2c; /* Dark input field background */
+            --input-border: #4c4c4c; /* Dark input field border */
+            --button-primary-bg: #6a994e;
+            --button-primary-hover: #5a8542;
+            --button-secondary-bg: #f0ad4e;
+            --button-secondary-hover: #ec971f;
+            --button-danger-bg: #d9534f;
+            --button-danger-hover: #c9302c;
+            --chart-bg: #1c1c1c; /* Chart background same as secondary */
+            --chart-grid-color: rgba(255, 255, 255, 0.15); /* Slightly more visible grid */
+            --table-header-bg: #2c2c2c; /* Table header same as tertiary */
+            --table-border-color: #3c3c3c; /* Table border a bit lighter than general border */
+            --table-hover-bg: #2c2c2c; /* Table hover same as tertiary */
         }
 
         body {
@@ -1575,8 +1575,11 @@
             transition: background-color 0.3s, box-shadow 0.3s;
         }
         section { /* General section styling for background and shadows */
-            background-color: var(--bg-tertiary);
-            box-shadow: inset 0 2px 4px var(--shadow-color);
+            background-color: var(--bg-secondary); /* Changed to secondary for consistency */
+            box-shadow: 0 4px 6px var(--shadow-color); /* Added box-shadow for a lifted effect */
+            border-radius: 0.75rem; /* Rounded corners */
+            padding: 1.5rem; /* Consistent padding */
+            margin-bottom: 2.5rem; /* Consistent spacing */
             transition: background-color 0.3s, box-shadow 0.3s;
         }
         header {
@@ -1744,7 +1747,7 @@
             transition: background-color 0.3s;
         }
         .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay for dark mode */
+            background-color: rgba(0, 0, 0, 0.8); /* Slightly darker overlay for dark mode */
         }
         .modal-content {
             background-color: var(--bg-secondary);
@@ -1791,9 +1794,9 @@
 </head>
 <body class="p-4">
     <div class="container bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <header class="text-center mb-8 bg-gray-50 dark:bg-gray-800 rounded-xl p-4"> <!-- Added bg to header -->
-            <h1 class="text-4xl font-bold mb-2">매매 일지 및 분석 대시보드</h1>
-            <p class="text-lg">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
+        <header class="text-center mb-8 rounded-xl p-4"> <!-- bg-gray-50 dark:bg-gray-800 removed -->
+            <h1 class="text-4xl font-bold mb-2 text-gray-900 dark:text-heading">매매 일지 및 분석 대시보드</h1>
+            <p class="text-lg text-gray-700 dark:text-secondary">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
             <div id="authButtons" class="flex justify-center gap-4 mt-4">
                 <button id="googleSignInBtn" onclick="signInWithGoogle()" class="bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors hidden">
                     구글 로그인
@@ -1802,7 +1805,7 @@
                     로그아웃
                 </button>
             </div>
-            <div id="userIdDisplay" class="text-sm text-gray-500 mt-2 dark:text-gray-400">사용자: 로딩 중...</div>
+            <div id="userIdDisplay" class="text-sm text-gray-500 mt-2 dark:text-secondary">사용자: 로딩 중...</div>
             <button id="darkModeToggle" onclick="toggleDarkMode()" class="mt-4 py-2 px-4 rounded-lg shadow">
                 다크 모드 토글
             </button>
@@ -1811,7 +1814,7 @@
         <div id="statusMessage" class="status-message hidden"></div>
         <div id="loadingSpinner" class="loading-spinner mx-auto hidden"></div>
 
-        <section id="trade-entry" class="mb-10 p-6 rounded-xl shadow-inner">
+        <section id="trade-entry" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">새로운 매매 기록하기</h2>
             <p class="text-sm mb-6">이 섹션에서 당신의 매매에 대한 모든 세부 정보를 입력할 수 있습니다. 각 필드를 채우고, 해당되는 심리 태그와 진입 근거를 선택한 다음, 매매 결과를 기록하여 당신의 트레이딩 데이터를 축적하세요. 이미 기록된 매매를 수정하려면 아래 '매매 기록 히스토리'에서 '수정' 버튼을 클릭하세요.</p>
 
@@ -1972,7 +1975,7 @@
             </form>
         </section>
 
-        <section id="tag-management" class="mb-10 p-6 rounded-xl shadow-inner">
+        <section id="tag-management" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">태그 관리</h2>
             <p class="text-sm mb-6">매매 기록에 사용할 심리 태그와 진입 근거를 직접 추가하거나 삭제할 수 있습니다. 추가된 태그는 모든 매매 기록에 즉시 반영됩니다.</p>
 
@@ -2023,7 +2026,7 @@
             </div>
         </section>
 
-        <section id="trade-history" class="mb-10 p-6 rounded-xl shadow-inner">
+        <section id="trade-history" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 기록 히스토리</h2>
             <p class="text-sm mb-6">여기에 당신이 기록한 모든 매매 내역이 최신순으로 표시됩니다. 각 매매의 주요 정보를 한눈에 확인하고, 전체적인 흐름을 파악할 수 있습니다. '수정' 버튼을 클릭하여 진행 중인 매매를 업데이트하거나 완료할 수 있습니다.</p>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
@@ -2050,7 +2053,7 @@
             </div>
         </section>
 
-        <section id="analysis-dashboard" class="mb-10 p-6 rounded-xl shadow-inner">
+        <section id="analysis-dashboard" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 분석 대시보드</h2>
             <p class="text-sm mb-6">기록된 매매 데이터를 바탕으로 당신의 트레이딩 패턴과 심리, 진입 근거의 영향을 시각적으로 분석합니다. 차트를 통해 어떤 요소들이 당신의 매매 결과에 영향을 미치는지 파악하고 개선점을 찾을 수 있습니다.</p>
 
@@ -2110,18 +2113,18 @@
         </section>
 
         <!-- New Section: Performance Reports -->
-        <section id="performance-reports" class="mb-10 p-6 rounded-xl shadow-inner">
+        <section id="performance-reports" class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">성과 보고서</h2>
             <p class="text-sm mb-6">월별 또는 분기별로 당신의 매매 성과를 요약하여 확인하세요.</p>
 
             <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
-                <label class="text-base font-medium">보고서 기간 선택:</label>
+                <label class="text-base font-medium text-gray-700 dark:text-gray-300">보고서 기간 선택:</label>
                 <div class="flex gap-4">
-                    <label class="flex items-center">
+                    <label class="flex items-center text-gray-700 dark:text-gray-300">
                         <input type="radio" name="reportPeriod" value="monthly" checked class="mr-2" id="reportPeriodMonthly">
                         월별
                     </label>
-                    <label class="flex items-center">
+                    <label class="flex items-center text-gray-700 dark:text-gray-300">
                         <input type="radio" name="reportPeriod" value="quarterly" class="mr-2" id="reportPeriodQuarterly">
                         분기별
                     </label>
