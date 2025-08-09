@@ -289,7 +289,7 @@
                 }, { merge: true }); // 기존 필드는 유지하면서 병합
                 document.getElementById('statusMessage').textContent = '태그가 성공적으로 저장되었습니다!';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-red-200');
+                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-green-200');
                 document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
             } catch (error) {
                 console.error("태그 저장 실패:", error);
@@ -802,7 +802,7 @@
                             minRotation: 0
                         },
                         grid: {
-                            display: false
+                            color: 'var(--chart-grid-color)'
                         }
                     }
                 },
@@ -1298,7 +1298,7 @@
                 await window.deleteDoc(window.doc(window.userTradesCollectionRef, tradeIdToDelete));
                 document.getElementById('statusMessage').textContent = '매매 기록이 성공적으로 삭제되었습니다!';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-red-200');
+                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-green-200');
                 document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
                 hideConfirmModal();
                 // 데이터는 onSnapshot을 통해 자동으로 업데이트되므로, 직접 렌더링/대시보드 업데이트 불필요
@@ -1544,21 +1544,21 @@
             --text-secondary: #cccccc; /* Slightly darker light grey for labels, muted text */
             --text-heading: #ffffff; /* Pure white for headings */
             --text-link: #98ee2c; /* A vibrant green for links/accents in dark mode */
-            --border-color: #3a3a3a; /* Darker, subtle border */
+            --border-color: var(--bg-primary); /* Darker, subtle border, now pure black */
             --shadow-color: rgba(0, 0, 0, 0.9); /* More prominent shadows */
-            --input-bg: #2a2a2a; /* Dark input field background */
-            --input-border: #3a3a3a; /* Dark input field border */
+            --input-bg: var(--bg-tertiary); /* Dark input field background */
+            --input-border: var(--bg-primary); /* Dark input field border, now pure black */
             --button-primary-bg: #6a994e; /* Buttons remain vibrant */
             --button-primary-hover: #5a8542;
             --button-secondary-bg: #f0ad4e;
             --button-secondary-hover: #ec971f;
             --button-danger-bg: #d9534f;
             --button-danger-hover: #c9302c;
-            --chart-bg: #1a1a1a; /* Chart background same as secondary */
+            --chart-bg: var(--bg-secondary); /* Chart background same as secondary */
             --chart-grid-color: rgba(255, 255, 255, 0.2); /* More visible grid for dark mode */
-            --table-header-bg: #2a2a2a; /* Table header same as tertiary */
-            --table-border-color: #3a3a3a; /* Table border a bit lighter than general border */
-            --table-hover-bg: #2a2a2a; /* Table hover same as tertiary */
+            --table-header-bg: var(--bg-tertiary); /* Table header same as tertiary */
+            --table-border-color: var(--bg-primary); /* Table border a bit lighter than general border, now pure black */
+            --table-hover-bg: var(--bg-tertiary); /* Table hover same as tertiary */
         }
 
         body {
@@ -1572,7 +1572,8 @@
             max-width: 1024px; /* Adjust as needed, e.g., max-w-5xl, max-w-7xl */
             margin-left: auto;
             margin-right: auto;
-            background-color: var(--bg-secondary);
+            /* Removed bg-white from here, will be controlled by var(--bg-secondary) */
+            background-color: var(--bg-secondary); /* Now correctly uses the variable */
             box-shadow: 0 4px 6px var(--shadow-color);
             border-radius: 0.75rem; /* Ensure container also has rounded corners */
             transition: background-color 0.3s, box-shadow 0.3s;
@@ -1583,7 +1584,8 @@
             border-radius: 0.75rem; /* Rounded corners */
             padding: 1.5rem; /* Consistent padding */
             margin-bottom: 2.5rem; /* Consistent spacing */
-            transition: background-color 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border-color); /* Added explicit border to sections */
+            transition: background-color 0.3s, box-shadow 0.3s, border-color 0.3s;
         }
         header {
             background-color: var(--bg-secondary); /* Ensure header also respects dark mode */
@@ -1796,8 +1798,8 @@
     </style>
 </head>
 <body class="p-4">
-    <div class="container bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <header class="text-center mb-8 rounded-xl p-4"> <!-- bg-gray-50 dark:bg-gray-800 removed -->
+    <div class="container rounded-2xl shadow-lg p-6 md:p-8"> <!-- Removed bg-white here -->
+        <header class="text-center mb-8 rounded-xl p-4">
             <h1 class="text-4xl font-bold mb-2 text-gray-900 dark:text-heading">매매 일지 및 분석 대시보드</h1>
             <p class="text-lg text-gray-700 dark:text-secondary">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
             <div id="authButtons" class="flex justify-center gap-4 mt-4">
@@ -2032,7 +2034,7 @@
         <section id="trade-history" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 기록 히스토리</h2>
             <p class="text-sm mb-6">여기에 당신이 기록한 모든 매매 내역이 최신순으로 표시됩니다. 각 매매의 주요 정보를 한눈에 확인하고, 전체적인 흐름을 파악할 수 있습니다. '수정' 버튼을 클릭하여 진행 중인 매매를 업데이트하거나 완료할 수 있습니다.</p>
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="overflow-x-auto rounded-lg"> <!-- Removed Tailwind borders and custom border will be applied below -->
                 <table class="min-w-full">
                     <thead class="bg-gray-100 dark:bg-gray-800">
                         <tr>
