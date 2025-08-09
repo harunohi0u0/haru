@@ -16,7 +16,7 @@
     <!-- Firebase SDK (v9 호환) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // 전역 변수 선언 (스코프 밖에서 접근 가능하도록)
@@ -64,7 +64,7 @@
                 console.error("로그아웃 실패:", error);
                 document.getElementById('statusMessage').textContent = `로그아웃 실패: ${error.message}`;
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
+                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-red-200');
                 document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
             }
         };
@@ -103,8 +103,14 @@
                 onAuthStateChanged(window.auth, async (user) => {
                     if (user) {
                         window.currentUserId = user.uid;
-                        console.log("Firebase 인증 성공:", user.uid);
-                        document.getElementById('userIdDisplay').textContent = `사용자 ID: ${user.uid}`;
+                        let userIdentifier = `ID: ${user.uid}`; // 전체 UID 표시
+                        if (user.isAnonymous) {
+                            userIdentifier += ' - 익명';
+                        } else if (user.email) {
+                            userIdentifier += ` (${user.email}) - Google`;
+                        }
+                        document.getElementById('userIdDisplay').textContent = `사용자: ${userIdentifier}`;
+                        
                         // 로그인 상태에 따라 로그인/로그아웃 버튼 표시 토글
                         document.getElementById('googleSignInBtn').classList.add('hidden');
                         document.getElementById('signOutBtn').classList.remove('hidden');
@@ -115,7 +121,7 @@
                     } else {
                         console.log("사용자 로그인되지 않음. 로그인 버튼 표시 및 익명 로그인 시도.");
                         // 사용자가 로그인되지 않은 경우 UI 업데이트
-                        document.getElementById('userIdDisplay').textContent = '사용자 ID: 로딩 중... (로그인 필요)';
+                        document.getElementById('userIdDisplay').textContent = '사용자: 로그인 필요';
                         document.getElementById('googleSignInBtn').classList.remove('hidden'); // 항상 보이도록
                         document.getElementById('signOutBtn').classList.add('hidden');
 
@@ -401,7 +407,7 @@
                     로그아웃
                 </button>
             </div>
-            <div id="userIdDisplay" class="text-sm text-gray-500 mt-2">사용자 ID: 로딩 중...</div>
+            <div id="userIdDisplay" class="text-sm text-gray-500 mt-2">사용자: 로딩 중...</div>
         </header>
 
         <div id="statusMessage" class="status-message hidden"></div>
@@ -822,7 +828,7 @@
             resultBreakdownChart = new Chart(resultBreakdownCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['수익', '손절', '본절', '진행 중'],
+                    labels: ['수익', '손절', '본절', '진행 중'], // Corrected label
                     datasets: [{
                         data: [0, 0, 0, 0],
                         backgroundColor: ['#6a994e', '#d9534f', '#f0ad4e', '#888888'],
@@ -1191,7 +1197,7 @@
                 console.error("매매 기록 삭제 실패:", error);
                 document.getElementById('statusMessage').textContent = '매매 기록 삭제 실패: ' + error.message;
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
+                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-red-200');
                 document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
             } finally {
                 document.getElementById('loadingSpinner').classList.add('hidden');
@@ -1285,7 +1291,7 @@
                 console.error("매매 기록 저장/업데이트 실패:", error);
                 document.getElementById('statusMessage').textContent = '매매 기록 저장/업데이트 실패: ' + error.message;
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
+                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-red-200');
                 document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
             } finally {
                 document.getElementById('loadingSpinner').classList.add('hidden');
