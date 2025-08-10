@@ -42,6 +42,38 @@
         window.customSuccessFactorsTags = []; // 추가
         window.customFailureFactorsTags = []; // 추가
 
+        // Firebase 설정 (Placeholder 값은 사용자님의 실제 프로젝트 값으로 변경해야 합니다)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Canvas 환경에서 제공되는 앱 ID
+        const firebaseConfig = {
+          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // <<< 실제 API Key로 변경
+          authDomain: "future-futures-0u0.firebaseapp.com", // <<< 실제 Auth Domain으로 변경
+          projectId: "future-futures-0u0", // <<< 실제 Project ID로 변경
+          storageBucket: "future-futures-0u0.firebasestorage.app",
+          messagingSenderId: "591254718769",
+          appId: "1:591254718769:web:45eccbfb9b6ed922fc4810",
+          measurementId: "G-6RGPM8RZGG"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Canvas 환경에서 제공되는 초기 인증 토큰
+
+
+        // --- Custom confirmation modal functions (전역 스코프로 이동) ---
+        let customConfirmCallback = null; // Callback for confirm action
+
+        // 확인 모달 표시 함수
+        window.showCustomConfirmationModal = function(message, callback) {
+            document.getElementById('confirmModalMessage').textContent = message;
+            customConfirmCallback = callback;
+            document.getElementById('confirmModalOverlay').classList.remove('hidden');
+        }
+
+        // 확인 모달 숨김 함수
+        window.hideCustomConfirmationModal = function() {
+            document.getElementById('confirmModalOverlay').classList.add('hidden');
+            customConfirmCallback = null;
+        }
+        // --- Custom confirmation modal functions (끝) ---
+
+
         // 기본 심리 태그 및 진입 근거
         const predefinedPsychologyTags = [
             "사전에 준비된 자리", "사전에 준비되지 않은 자리", "조급함", "흥분상태",
@@ -99,21 +131,6 @@
             }
         };
 
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Canvas 환경에서 제공되는 앱 ID
-        // 사용자의 실제 Firebase 프로젝트 구성으로 아래 firebaseConfig 객체를 업데이트하세요.
-        // Firebase 콘솔 (project settings -> General -> Your apps)에서 확인 가능합니다.
-        // **이 부분을 정확히 채우지 않으면 로그인 및 데이터 저장 기능이 작동하지 않습니다.**
-        const firebaseConfig = {
-          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // <<< 실제 API Key로 변경
-          authDomain: "future-futures-0u0.firebaseapp.com", // <<< 실제 Auth Domain으로 변경
-          projectId: "future-futures-0u0", // <<< 실제 Project ID로 변경
-          storageBucket: "future-futures-0u0.firebasestorage.app",
-          messagingSenderId: "591254718769",
-          appId: "1:591254718769:web:45eccbfb9b6ed922fc4810",
-          measurementId: "G-6RGPM8RZGG"
-        };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Canvas 환경에서 제공되는 초기 인증 토큰
 
         // Helper functions for status/loading
         function showStatusMessage(message, type = 'info') {
@@ -560,20 +577,6 @@
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
             updateChartColors(isDarkMode); // 차트 색상 업데이트
         };
-
-        // Custom confirmation modal functions
-        let customConfirmCallback = null; // Callback for confirm action
-
-        function showCustomConfirmationModal(message, callback) {
-            document.getElementById('confirmModalMessage').textContent = message;
-            customConfirmCallback = callback;
-            confirmModalOverlay.classList.remove('hidden');
-        }
-
-        function hideCustomConfirmationModal() {
-            confirmModalOverlay.classList.add('hidden');
-            customConfirmCallback = null;
-        }
         
         // 차트 색상 업데이트 함수 (다크 모드 전환 시 호출)
         function updateChartColors(isDarkMode) {
@@ -702,11 +705,11 @@
             // 모달 닫기 버튼 이벤트
             const confirmModalCloseBtn = document.getElementById('confirmModalClose');
             if (confirmModalCloseBtn) { // 요소가 존재하는지 확인
-                confirmModalCloseBtn.addEventListener('click', hideCustomConfirmationModal);
+                confirmModalCloseBtn.addEventListener('click', window.hideCustomConfirmationModal);
             }
             const cancelDeleteBtn = document.getElementById('cancelDelete');
             if (cancelDeleteBtn) { // 요소가 존재하는지 확인
-                cancelDeleteBtn.addEventListener('click', hideCustomConfirmationModal);
+                cancelDeleteBtn.addEventListener('click', window.hideCustomConfirmationModal);
             }
 
             // Custom modal confirm button listener
@@ -714,7 +717,7 @@
                 if (customConfirmCallback) {
                     customConfirmCallback();
                 }
-                hideCustomConfirmationModal();
+                window.hideCustomConfirmationModal();
             });
 
             // --- 이벤트 리스너를 동적으로 연결하도록 수정된 부분 ---
