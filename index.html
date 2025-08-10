@@ -1206,16 +1206,16 @@
                 // Removed all Tailwind bg-white, dark:bg-gray-800, divide-gray-200, dark:divide-gray-700 classes from table and cells
                 // Replaced with custom CSS for table borders and cell colors
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.exitDate || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${holdingPeriod || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.stockName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.tradeType}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.resultOutcome}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
-                    <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">.${trade.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.exitDate || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${holdingPeriod || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.stockName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.tradeType}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.resultOutcome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-800">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
+                    <td class="px-6 py-4 text-sm text-gray-800">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editTrade('${trade.id}')" class="text-indigo-600 hover:text-indigo-900 ml-2 dark:text-indigo-400 dark:hover:text-indigo-200">수정</button>
                         <button onclick="showCustomConfirmationModal('정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', () => deleteTrade('${trade.id}'))" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
@@ -1395,7 +1395,7 @@
                 weight: parseFloat(document.getElementById('weight').value),
                 exitDate: document.getElementById('exitDate').value || null,
                 psychology: Array.from(document.querySelectorAll('input[name="psychology"]:checked')).map(cb => cb.value),
-                entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis"]:checked')).map(cb => cb.value),
+                entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis']:checked')).map(cb => cb.value),
                 resultOutcome: resultOutcomeSelect.value,
                 rRatio: parseFloat(rRatioInput.value) || null,
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
@@ -1772,7 +1772,7 @@
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid var(--table-border-color); /* Use custom variable for border-bottom */
-            color: var(--text-primary);
+            color: var(--text-primary); /* This will be #f0f0f0 in dark mode */
             transition: border-color 0.3s, color 0.3s;
         }
         tr:hover {
