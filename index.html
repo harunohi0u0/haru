@@ -16,8 +16,7 @@
     <!-- Firebase SDK (v9 호환) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        // signInWithPopup 대신 signInWithRedirect 사용, 로그인 후 결과 처리를 위해 getRedirectResult 추가
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signOut, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, updateDoc, addDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // 전역 변수 선언 (스코프 밖에서 접근 가능하도록)
@@ -67,16 +66,14 @@
         const googleProvider = new GoogleAuthProvider();
         window.signInWithGoogle = async function() {
             try {
-                // signInWithPopup 대신 signInWithRedirect 사용
-                // signInWithRedirect는 팝업을 차단하는 브라우저에서 더 안정적입니다.
-                // 이 함수는 사용자 브라우저를 Google 로그인 페이지로 리다이렉트합니다.
-                // 로그인 성공 후에는 getRedirectResult로 결과를 받아야 합니다.
-                await signInWithRedirect(window.auth, googleProvider);
-                console.log("Google 로그인 리다이렉트 시작...");
-                // 이 시점에서 페이지는 리다이렉트되므로, 여기 이하의 코드는 실행되지 않습니다.
+                // signInWithPopup을 사용하여 팝업으로 로그인
+                const result = await signInWithPopup(window.auth, googleProvider);
+                // 로그인이 성공하면 onAuthStateChanged 리스너가 사용자 정보를 업데이트합니다.
+                console.log("Google 로그인 성공:", result.user);
             } catch (error) {
-                console.error("Google 로그인 리다이렉트 실패:", error);
+                console.error("Google 로그인 실패:", error);
                 const errorMessage = error.message;
+                // 사용자에게 오류 메시지 표시
                 document.getElementById('statusMessage').textContent = `Google 로그인 실패: ${errorMessage}`;
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
@@ -104,27 +101,26 @@
 
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Canvas 환경에서 제공되는 앱 ID
-        // Firebase 콘솔 (project settings -> General -> Your apps)에서 복사한 실제 Firebase 프로젝트 구성입니다.
-        // 이 부분을 **반드시** 선생님의 실제 Firebase 프로젝트 설정으로 업데이트해주세요!
-        // 이 정보가 올바르지 않으면 로그인 및 데이터 저장/삭제 기능이 작동하지 않습니다.
+        // 사용자의 실제 Firebase 프로젝트 구성으로 아래 firebaseConfig 객체를 업데이트하세요.
+        // Firebase 콘솔 (project settings -> General -> Your apps)에서 확인 가능합니다.
+        // **이 부분을 정확히 채우지 않으면 로그인 및 데이터 저장 기능이 작동하지 않습니다.**
         const firebaseConfig = {
-            apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // 실제 Firebase API Key로 변경하세요
-            authDomain: "future-futures-0u0.firebaseapp.com", // 실제 Auth Domain으로 변경하세요
-            projectId: "future-futures-0u0", // 실제 Project ID로 변경하세요
-            storageBucket: "future-futures-0u0.firebasestorage.app", // 실제 Storage Bucket으로 변경하세요
-            messagingSenderId: "591254718769", // 실제 Messaging Sender ID로 변경하세요
-            appId: "1:591254718769:web:45eccbfb9b6ed922fc4810", // 실제 App ID로 변경하세요
-            measurementId: "G-6RGPM8RZGG" // 실제 Measurement ID로 변경하세요
+          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // <<< 실제 API Key로 변경
+          authDomain: "future-futures-0u0.firebaseapp.com", // <<< 실제 Auth Domain으로 변경
+          projectId: "future-futures-0u0", // <<< 실제 Project ID로 변경
+          storageBucket: "future-futures-0u0.firebasestorage.app",
+          messagingSenderId: "591254718769",
+          appId: "1:591254718769:web:45eccbfb9b6ed922fc4810",
+          measurementId: "G-6RGPM8RZGG"
         };
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Canvas 환경에서 제공되는 초기 인증 토큰
 
         // Firebase 초기화 및 인증
         async function initializeFirebase() {
             console.log("Initializing Firebase...");
-            // Firebase 설정이 제대로 되어있는지 한 번 더 확인합니다.
-            if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
-                console.error("Firebase 초기화 실패: Firebase 설정 정보가 올바르지 않습니다.");
-                document.getElementById('statusMessage').textContent = 'Firebase 초기화 오류: 프로젝트 설정이 누락되었거나 올바르지 않습니다. 코드를 확인하고 Firebase 콘솔에서 복사한 실제 설정으로 업데이트해주세요.';
+            if (!firebaseConfig || !firebaseConfig.projectId || firebaseConfig.apiKey === "YOUR_API_KEY") { // Check for placeholder
+                console.error("Firebase 초기화 실패: 'projectId' 또는 'apiKey'가 Firebase 설정에 올바르게 제공되지 않았습니다. 환경 변수 '__firebase_config'를 확인하거나, 하드코딩된 값을 업데이트해주세요.");
+                document.getElementById('statusMessage').textContent = 'Firebase 초기화 오류: 프로젝트 설정이 누락되었거나 올바르지 않습니다. 환경 설정을 확인해주세요.';
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('loadingSpinner').classList.add('hidden');
                 document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
@@ -136,20 +132,6 @@
                 window.firebaseApp = initializeApp(firebaseConfig);
                 window.db = getFirestore(window.firebaseApp);
                 window.auth = getAuth(window.firebaseApp);
-
-                // 리다이렉트 로그인 결과 처리
-                // 사용자가 Google에서 로그인한 후 앱으로 돌아올 때 이 부분이 실행됩니다.
-                const result = await getRedirectResult(window.auth);
-                if (result) {
-                    // 로그인 성공! result.user에서 사용자 정보를 얻을 수 있습니다.
-                    console.log("Google 리다이렉트 로그인 성공:", result.user);
-                    document.getElementById('statusMessage').textContent = 'Google 로그인 성공!';
-                    document.getElementById('statusMessage').classList.remove('hidden');
-                    document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-red-200');
-                    document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
-                    setTimeout(() => { document.getElementById('statusMessage').classList.add('hidden'); }, 3000);
-                }
-
 
                 onAuthStateChanged(window.auth, async (user) => {
                     if (user) {
@@ -175,8 +157,7 @@
                         loadCustomTags(); // 사용자 정의 태그 로드
                         // 데이터 로딩 성공 또는 로그인 상태 변경 시 로딩 스피너 및 메시지 숨김
                         document.getElementById('loadingSpinner').classList.add('hidden');
-                        // 메시지가 성공적으로 표시된 후에는 hidden으로 설정
-                        // document.getElementById('statusMessage').classList.add('hidden'); // getRedirectResult에서 처리하거나, 상태 변화에 따라 다른 메시지가 필요할 수 있으므로 주석 처리
+                        document.getElementById('statusMessage').classList.add('hidden');
 
                         // Initial setup for report period display based on default checked radio
                         // Ensure month selector is visible by default
@@ -216,12 +197,10 @@
 
                 // For Canvas runtime, try signing in with the provided token if available
                 if (initialAuthToken) {
-                    // Canvas 환경에서만 __initial_auth_token이 제공됩니다.
-                    // 웹 배포 환경에서는 이 코드가 실행되지 않습니다.
                     await signInWithCustomToken(window.auth, initialAuthToken);
                     console.log("Canvas initial auth token login successful.");
                 } else {
-                    // 직접 웹 접속 또는 초기 토큰이 없는 경우, 명시적인 사용자 로그인을 기다립니다.
+                    // For direct web access or if no initial token, UI waits for explicit sign-in
                     console.log("No initial auth token. Waiting for explicit user login.");
                 }
 
@@ -313,7 +292,7 @@
                 }, { merge: true }); // 기존 필드는 유지하면서 병합
                 document.getElementById('statusMessage').textContent = '태그가 성공적으로 저장되었습니다!';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-green-100', 'border-green-200');
+                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-green-200');
                 document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
             } catch (error) {
                 console.error("태그 저장 실패:", error);
@@ -522,15 +501,13 @@
             predefinedFailureFactors.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                // 템플릿 리터럴을 문자열 연결로 변경 (구문 오류 우회 시도)
-                label.innerHTML = '<input type="checkbox" name="failureFactor" value="' + factor + '" class="mr-2">' + factor;
+                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`;
                 failureFactorsContainer.appendChild(label);
             });
             window.customFailureFactorsTags.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                // 템플릿 리터럴을 문자열 연결로 변경 (구문 오류 우회 시도)
-                label.innerHTML = '<input type="checkbox" name="failureFactor" value="' + factor + '" class="mr-2">' + factor;
+                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${tag}`;
                 failureFactorsContainer.appendChild(label);
             });
             failureFactorsContainer.appendChild(document.createElement('div')).className = "mb-4 col-span-full"; // Added col-span-full
@@ -740,30 +717,12 @@
                 hideCustomConfirmationModal();
             });
 
-            // --- 이벤트 리스너를 동적으로 연결하도록 수정된 부분 ---
-            const googleSignInBtn = document.getElementById('googleSignInBtn');
-            if (googleSignInBtn) {
-                googleSignInBtn.addEventListener('click', window.signInWithGoogle);
-            }
-
-            const signOutBtn = document.getElementById('signOutBtn');
-            if (signOutBtn) {
-                signOutBtn.addEventListener('click', window.signOutUser);
-            }
-
-            const darkModeToggleBtn = document.getElementById('darkModeToggle');
-            if (darkModeToggleBtn) {
-                darkModeToggleBtn.addEventListener('click', window.toggleDarkMode);
-            }
-            // --- 수정된 부분 끝 ---
-
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Set default entry date to today
-            // Firebase 초기화는 다른 모든 UI 로직보다 먼저 호출
-            initializeFirebase(); 
-            initializeCharts(); // 차트 초기화는 Firebase 초기화 후 호출 (데이터 종속성 고려)
+            initializeCharts(); // 차트 초기화는 색상 업데이트보다 먼저!
             updateChartColors(savedTheme === 'dark'); // 다크 모드 초기화 후 차트 색상 업데이트
             updateResultFieldRequirements(); // Set initial required status
+            initializeFirebase(); // Firebase 초기화
 
             // Add event listener for exchange rate input
             const exchangeRateInput = document.getElementById('exchangeRateInput');
@@ -1086,7 +1045,6 @@
             const winRate = totalTrades > 0 ? (winTrades / totalTrades * 100).toFixed(2) : 0;
             document.getElementById('winRate').textContent = `${winRate}%`;
 
-            // totalRR 계산 부분 수정: reduce 콜백 함수 괄호 수정
             const totalRR = completedTrades.reduce((sum, t) => sum + (parseFloat(t.rRatio) || 0), 0);
             const avgRR = totalTrades > 0 ? (totalRR / totalTrades).toFixed(2) : 0;
             document.getElementById('avgRR').textContent = formatNumberWithCommas(avgRR); // Apply comma formatting
@@ -1249,17 +1207,19 @@
 
 
                 const row = document.createElement('tr');
+                // Removed all Tailwind bg-white, dark:bg-gray-800, divide-gray-200, dark:divide-gray-700 classes from table and cells
+                // Replaced with custom CSS for table borders and cell colors
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.exitDate || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${holdingPeriod || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.stockName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.tradeType}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.resultOutcome}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
-                    <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.exitDate || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${holdingPeriod || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.stockName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.tradeType}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.resultOutcome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
+                    <td class="px-6 py-4 text-sm">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
+                    <td class="px-6 py-4 text-sm">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editTrade('${trade.id}')" class="text-indigo-600 hover:text-indigo-900 ml-2 dark:text-indigo-400 dark:hover:text-indigo-200">수정</button>
                         <button onclick="showCustomConfirmationModal('정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', () => deleteTrade('${trade.id}'))" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
@@ -1354,12 +1314,9 @@
 
         // Handle actual delete logic
         window.deleteTrade = async function(tradeId) {
-            // Firebase DB, currentUser, userTradesCollectionRef가 모두 유효한지 확인
             if (!window.db || !window.currentUserId || !window.userTradesCollectionRef) {
-                document.getElementById('statusMessage').textContent = '데이터베이스가 아직 준비되지 않았거나, 로그인 상태를 확인할 수 없습니다. 잠시 후 다시 시도하거나 로그인해주세요.';
+                document.getElementById('statusMessage').textContent = '데이터베이스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
-                document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
                 return;
             }
 
@@ -1367,16 +1324,15 @@
             document.getElementById('statusMessage').classList.add('hidden');
 
             try {
-                // doc 함수에 userTradesCollectionRef와 tradeId를 함께 전달하여 올바른 문서 참조를 생성
                 await window.deleteDoc(window.doc(window.userTradesCollectionRef, tradeId));
                 document.getElementById('statusMessage').textContent = '매매 기록이 성공적으로 삭제되었습니다!';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-green-100', 'border-green-200');
+                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-green-200');
                 document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
-                setTimeout(() => { document.getElementById('statusMessage').classList.add('hidden'); }, 3000); // 3초 후 메시지 숨김
+                // 데이터는 onSnapshot을 통해 자동으로 업데이트되므로, 직접 렌더링/대시보드 업데이트 불필요
             } catch (error) {
                 console.error("매매 기록 삭제 실패:", error);
-                document.getElementById('statusMessage').textContent = '매매 기록 삭제 실패: ' + error.message + '. Firebase 콘솔에서 보안 규칙과 로그인 상태를 확인해주세요.';
+                document.getElementById('statusMessage').textContent = '매매 기록 삭제 실패: ' + error.message;
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-red-200');
                 document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
@@ -1424,10 +1380,8 @@
             event.preventDefault();
 
             if (!window.db || !window.currentUserId || !window.userTradesCollectionRef) {
-                document.getElementById('statusMessage').textContent = '데이터베이스가 아직 준비되지 않았거나, 로그인 상태를 확인할 수 없습니다. 잠시 후 다시 시도하거나 로그인해주세요.';
+                document.getElementById('statusMessage').textContent = '데이터베이스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
-                document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
                 return;
             }
 
@@ -1442,17 +1396,17 @@
                 stopLossPrice: parseFloat(document.getElementById('stopLossPrice').value) || null,
                 targetPrice: parseFloat(document.getElementById('targetPrice').value) || null,
                 half: parseFloat(document.getElementById('half').value) || null,
-                weight: parseFloat(document.getElementById('weight').value), // 괄호 오타 수정됨
+                weight: parseFloat(document.getElementById('weight').value),
                 exitDate: document.getElementById('exitDate').value || null,
                 psychology: Array.from(document.querySelectorAll('input[name="psychology"]:checked')).map(cb => cb.value),
                 entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis"]:checked')).map(cb => cb.value),
                 resultOutcome: resultOutcomeSelect.value,
                 rRatio: parseFloat(rRatioInput.value) || null,
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
-                pnlCurrency: document.querySelector('input[name="pnlCurrency']:checked')?.value || 'KRW', // ADDED: pnlCurrency
+                pnlCurrency: document.querySelector('input[name="pnlCurrency"]:checked')?.value || 'KRW', // ADDED: pnlCurrency
                 exitReason: exitReasonSelect.value || null,
-                successFactors: Array.from(document.querySelectorAll('input[name="successFactor']:checked')).map(cb => cb.value), // 성공 요인 저장
-                failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor']:checked')).map(cb => cb.value), // 실패 요인 저장
+                successFactors: Array.from(document.querySelectorAll('input[name="successFactor"]:checked')).map(cb => cb.value), // 성공 요인 저장
+                failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor"]:checked')).map(cb => cb.value), // 실패 요인 저장
                 replayQuestion1: replayQuestion1Select.value || null,
                 replayQuestion2: replayQuestion2Textarea.value || null,
                 replayQuestion3: parseInt(replayQuestion3Input.value) || null,
@@ -1485,7 +1439,7 @@
                 // 데이터는 onSnapshot을 통해 자동으로 업데이트되므로, 직접 렌더링/대시보드 업데이트 불필요
             } catch (error) {
                 console.error("매매 기록 저장/업데이트 실패:", error);
-                document.getElementById('statusMessage').textContent = '매매 기록 저장/업데이트 실패: ' + error.message + '. Firebase 콘솔에서 보안 규칙과 로그인 상태를 확인해주세요.';
+                document.getElementById('statusMessage').textContent = '매매 기록 저장/업데이트 실패: ' + error.message;
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-red-200');
                 document.getElementById('statusMessage').classList.add('text-red-600', 'bg-red-100', 'border-red-200');
@@ -1881,15 +1835,15 @@
             <h1 class="text-4xl font-bold mb-2">매매 일지 및 분석 대시보드</h1>
             <p class="text-lg text-gray-700 dark:text-secondary">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
             <div id="authButtons" class="flex justify-center gap-4 mt-4">
-                <button id="googleSignInBtn" class="bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors hidden">
+                <button id="googleSignInBtn" onclick="signInWithGoogle()" class="bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors hidden">
                     구글 로그인
                 </button>
-                <button id="signOutBtn" class="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors hidden">
+                <button id="signOutBtn" onclick="signOutUser()" class="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors hidden">
                     로그아웃
                 </button>
             </div>
             <div id="userIdDisplay" class="text-sm text-gray-500 mt-2 dark:text-secondary">사용자: 로딩 중...</div>
-            <button id="darkModeToggle" class="mt-4 py-2 px-4 rounded-lg shadow">
+            <button id="darkModeToggle" onclick="toggleDarkMode()" class="mt-4 py-2 px-4 rounded-lg shadow">
                 다크 모드 토글
             </button>
         </header>
@@ -2021,7 +1975,7 @@
                             <div class="checkbox-group mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2"> 
                                 <div id="successFactorsCheckboxes" class="contents"> 
                                     <!-- Success factors will be dynamically inserted here by JS -->
-                                </div>
+                                }
                             </div>
 
                             <!-- b-2 실패 요인 진단 (Dynamic content only) -->
