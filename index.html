@@ -350,7 +350,8 @@
 
         // 태그 삭제
         window.deleteCustomTag = async function(type, tag) {
-            if (confirm(`'${tag}' 태그를 삭제하시겠습니까?`)) {
+            // 커스텀 모달 사용 (confirm 대신)
+            showCustomConfirmationModal(`'${tag}' 태그를 삭제하시겠습니까?`, async () => {
                 if (type === 'psychology') {
                     window.customPsychologyTags = window.customPsychologyTags.filter(t => t !== tag);
                 } else if (type === 'entryBasis') {
@@ -363,7 +364,7 @@
                 await saveCustomTags();
                 renderTagCheckboxes();
                 renderTagManagementSections();
-            }
+            });
         };
 
         // 매매 기록 폼에 태그 체크박스 동적 렌더링
@@ -562,15 +563,30 @@
             updateChartColors(isDarkMode); // 차트 색상 업데이트
         };
 
+        // Custom confirmation modal functions
+        let customConfirmCallback = null; // Callback for confirm action
+
+        function showCustomConfirmationModal(message, callback) {
+            document.getElementById('confirmModalMessage').textContent = message;
+            customConfirmCallback = callback;
+            confirmModalOverlay.classList.remove('hidden');
+        }
+
+        function hideCustomConfirmationModal() {
+            confirmModalOverlay.classList.add('hidden');
+            customConfirmCallback = null;
+        }
+        
         // 차트 색상 업데이트 함수 (다크 모드 전환 시 호출)
         function updateChartColors(isDarkMode) {
-            const textColor = isDarkMode ? 'var(--text-primary)' : '#333'; // Explicitly use a dark color for light mode, light for dark
-            const gridColor = isDarkMode ? 'var(--chart-grid-color)' : 'rgba(0, 0, 0, 0.1)';
+            const rootStyle = getComputedStyle(document.documentElement);
+            const resolvedTextColor = isDarkMode ? rootStyle.getPropertyValue('--text-primary') : '#333';
+            const resolvedGridColor = isDarkMode ? rootStyle.getPropertyValue('--chart-grid-color') : 'rgba(0, 0, 0, 0.1)';
             const tooltipFontColor = isDarkMode ? '#1a1a1a' : '#ffffff';
             const tooltipBgColor = isDarkMode ? '#e2e8f0' : 'rgba(0, 0, 0, 0.8)';
 
             // Set global Chart.js default font color
-            Chart.defaults.color = textColor; // For general text like axis labels, legends
+            Chart.defaults.color = resolvedTextColor; // Use resolved color
             Chart.defaults.font.family = 'Inter, sans-serif'; // Maintain font consistency
 
             // Common scale options for bar charts and horizontal bar charts
@@ -582,7 +598,7 @@
                         position: 'top',
                         labels: {
                             font: { size: 12 },
-                            color: textColor // Use dynamic text color
+                            color: resolvedTextColor // Use resolved color
                         }
                     },
                     tooltip: {
@@ -600,19 +616,19 @@
                         beginAtZero: true,
                         max: isVertical ? 100 : undefined, // Only for percentage charts
                         ticks: {
-                            color: textColor,
+                            color: resolvedTextColor, // Use resolved color
                             callback: isVertical ? function(value) { return value + '%'; } : undefined,
                             precision: isVertical ? undefined : 0
                         },
                         grid: {
                             display: true,
                             drawBorder: false,
-                            color: gridColor
+                            color: resolvedGridColor // Use resolved color
                         }
                     },
                     [isVertical ? 'x' : 'y']: { // X-axis for vertical, Y-axis for horizontal
                         ticks: {
-                            color: textColor,
+                            color: resolvedTextColor, // Use resolved color
                             callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), isVertical ? 16 : 25); },
                             autoSkip: false,
                             maxRotation: isVertical ? 45 : 0,
@@ -630,36 +646,40 @@
 
             // Result Breakdown Chart (Doughnut)
             if (resultBreakdownChart) {
-                resultBreakdownChart.options.plugins.legend.labels.color = textColor;
+                resultBreakdownChart.options.plugins.legend.labels.color = resolvedTextColor;
                 resultBreakdownChart.update();
             }
 
             // Bar Charts
             if (psychologyImpactChart) {
-                psychologyImpactChart.options.scales = commonScalesOptions(true).scales; // Update scales dynamically
+                // Manually update properties to avoid recreating the chart
+                Object.assign(psychologyImpactChart.options.scales, commonScalesOptions(true).scales);
+                psychologyImpactChart.options.plugins.legend.labels.color = resolvedTextColor;
                 psychologyImpactChart.update();
             }
             if (entryBasisEffectivenessChart) {
-                entryBasisEffectivenessChart.options.scales = commonScalesOptions(true).scales; // Update scales dynamically
+                Object.assign(entryBasisEffectivenessChart.options.scales, commonScalesOptions(true).scales);
+                entryBasisEffectivenessChart.options.plugins.legend.labels.color = resolvedTextColor;
                 entryBasisEffectivenessChart.update();
             }
             if (successFactorChart) {
-                successFactorChart.options.scales = commonScalesOptions(false).scales; // Update scales dynamically (horizontal)
+                Object.assign(successFactorChart.options.scales, commonScalesOptions(false).scales);
+                successFactorChart.options.plugins.legend.labels.color = resolvedTextColor;
                 successFactorChart.update();
             }
             if (failureFactorChart) {
-                failureFactorChart.options.scales = commonScalesOptions(false).scales; // Update scales dynamically (horizontal)
+                Object.assign(failureFactorChart.options.scales, commonScalesOptions(false).scales);
+                failureFactorChart.options.plugins.legend.labels.color = resolvedTextColor;
                 failureFactorChart.update();
             }
             
-
             // Chart tooltip text color update
             [resultBreakdownChart, psychologyImpactChart, entryBasisEffectivenessChart, successFactorChart, failureFactorChart].forEach(chart => {
                 if (chart && chart.options && chart.options.plugins && chart.options.plugins.tooltip) {
                     chart.options.plugins.tooltip.titleColor = tooltipFontColor;
                     chart.options.plugins.tooltip.bodyColor = tooltipFontColor;
                     chart.options.plugins.tooltip.backgroundColor = tooltipBgColor;
-                    chart.options.plugins.tooltip.borderColor = isDarkMode ? 'var(--text-link)' : 'var(--button-primary-bg)';
+                    chart.options.plugins.tooltip.borderColor = isDarkMode ? rootStyle.getPropertyValue('--text-link') : rootStyle.getPropertyValue('--button-primary-bg');
                     chart.options.plugins.tooltip.borderWidth = 1;
                 }
             });
@@ -678,12 +698,20 @@
             // 모달 닫기 버튼 이벤트
             const confirmModalCloseBtn = document.getElementById('confirmModalClose');
             if (confirmModalCloseBtn) { // 요소가 존재하는지 확인
-                confirmModalCloseBtn.addEventListener('click', hideConfirmModal);
+                confirmModalCloseBtn.addEventListener('click', hideCustomConfirmationModal);
             }
             const cancelDeleteBtn = document.getElementById('cancelDelete');
             if (cancelDeleteBtn) { // 요소가 존재하는지 확인
-                cancelDeleteBtn.addEventListener('click', hideConfirmModal);
+                cancelDeleteBtn.addEventListener('click', hideCustomConfirmationModal);
             }
+
+            // Custom modal confirm button listener
+            document.getElementById('confirmActionButton').addEventListener('click', () => {
+                if (customConfirmCallback) {
+                    customConfirmCallback();
+                }
+                hideCustomConfirmationModal();
+            });
 
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Set default entry date to today
@@ -735,7 +763,7 @@
 
         let currentEditingTradeId = null; // 수정 중인 매매 ID 추적
 
-        // 모달 관련 요소
+        // 모달 관련 요소 (기존 confirmModalOverlay는 삭제 확인용으로 재활용)
         const confirmModalOverlay = document.getElementById('confirmModalOverlay');
         const confirmDeleteButton = document.getElementById('confirmDelete');
         let tradeIdToDelete = null;
@@ -776,6 +804,11 @@
 
         // Initialize Charts (This function needs to be defined BEFORE it's called in window.onload)
         function initializeCharts() {
+            // Get computed style once to initialize with correct colors
+            const rootStyle = getComputedStyle(document.documentElement);
+            const initialTextColor = document.documentElement.classList.contains('dark-mode') ? rootStyle.getPropertyValue('--text-primary') : '#333';
+            const initialGridColor = document.documentElement.classList.contains('dark-mode') ? rootStyle.getPropertyValue('--chart-grid-color') : 'rgba(0, 0, 0, 0.1)';
+
             // Common options for vertical bar charts (Psychology Impact, Entry Basis Effectiveness)
             const commonVerticalBarChartOptions = {
                 responsive: true,
@@ -785,7 +818,7 @@
                         position: 'top',
                         labels: {
                             font: { size: 12 },
-                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
+                            color: initialTextColor // Will be dynamically set by updateChartColors
                         }
                     },
                     tooltip: {
@@ -805,17 +838,17 @@
                         max: 100,
                         ticks: {
                             callback: function(value) { return value + '%'; },
-                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
+                            color: initialTextColor // Will be dynamically set by updateChartColors
                         },
                         grid: {
                             display: true,
                             drawBorder: false,
-                            color: 'var(--chart-grid-color)' // Will be dynamically set by updateChartColors
+                            color: initialGridColor // Will be dynamically set by updateChartColors
                         }
                     },
                     x: {
                         ticks: {
-                            color: 'var(--text-primary)', // Will be dynamically set by updateChartColors
+                            color: initialTextColor, // Will be dynamically set by updateChartColors
                             callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), 16); },
                             autoSkip: false,
                             maxRotation: 45,
@@ -841,7 +874,7 @@
                         display: false, // No legend needed if only one dataset per chart
                         labels: {
                             font: { size: 12 },
-                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
+                            color: initialTextColor // Will be dynamically set by updateChartColors
                         }
                     },
                     tooltip: {
@@ -860,15 +893,15 @@
                         beginAtZero: true,
                         ticks: {
                             precision: 0,
-                            color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
+                            color: initialTextColor // Will be dynamically set by updateChartColors
                         },
                         grid: {
-                            color: 'var(--chart-grid-color)' // Will be dynamically set by updateChartColors
+                            color: initialGridColor // Will be dynamically set by updateChartColors
                         }
                     },
                     y: {
                         ticks: {
-                            color: 'var(--text-primary)', // Will be dynamically set by updateChartColors
+                            color: initialTextColor, // Will be dynamically set by updateChartColors
                             callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), 25); },
                             autoSkip: false,
                             maxRotation: 0,
@@ -904,7 +937,7 @@
                             position: 'top',
                             labels: {
                                 font: { size: 12 },
-                                color: 'var(--text-primary)' // Will be dynamically set by updateChartColors
+                                color: initialTextColor // Will be dynamically set by updateChartColors
                             }
                         },
                         tooltip: {
@@ -1185,7 +1218,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editTrade('${trade.id}')" class="text-indigo-600 hover:text-indigo-900 ml-2 dark:text-indigo-400 dark:hover:text-indigo-200">수정</button>
-                        <button onclick="showConfirmModal('${trade.id}')" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
+                        <button onclick="showCustomConfirmationModal('정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', () => deleteTrade('${trade.id}'))" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
                     </td>
                 `;
                 tradeHistoryBody.appendChild(row);
@@ -1274,22 +1307,9 @@
             document.getElementById('trade-entry').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Function to show the confirmation modal
-        window.showConfirmModal = function(tradeId) {
-            tradeIdToDelete = tradeId;
-            confirmModalOverlay.classList.remove('hidden');
-        }
-
-        // Function to hide the confirmation modal
-        function hideConfirmModal() {
-            confirmModalOverlay.classList.add('hidden');
-            tradeIdToDelete = null;
-        }
 
         // Handle actual delete logic
-        confirmDeleteButton.addEventListener('click', async () => {
-            if (!tradeIdToDelete) return;
-
+        window.deleteTrade = async function(tradeId) {
             if (!window.db || !window.currentUserId || !window.userTradesCollectionRef) {
                 document.getElementById('statusMessage').textContent = '데이터베이스가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.';
                 document.getElementById('statusMessage').classList.remove('hidden');
@@ -1300,12 +1320,11 @@
             document.getElementById('statusMessage').classList.add('hidden');
 
             try {
-                await window.deleteDoc(window.doc(window.userTradesCollectionRef, tradeIdToDelete));
+                await window.deleteDoc(window.doc(window.userTradesCollectionRef, tradeId));
                 document.getElementById('statusMessage').textContent = '매매 기록이 성공적으로 삭제되었습니다!';
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-green-200');
                 document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
-                hideConfirmModal();
                 // 데이터는 onSnapshot을 통해 자동으로 업데이트되므로, 직접 렌더링/대시보드 업데이트 불필요
             } catch (error) {
                 console.error("매매 기록 삭제 실패:", error);
@@ -1316,7 +1335,7 @@
             } finally {
                 document.getElementById('loadingSpinner').classList.add('hidden');
             }
-        });
+        };
 
 
         // Function to update required status of result fields
@@ -1806,7 +1825,7 @@
 <body class="p-4">
     <div class="container rounded-2xl shadow-lg p-6 md:p-8"> <!-- Removed bg-white here -->
         <header class="text-center mb-8 rounded-xl p-4">
-            <h1 class="text-4xl font-bold mb-2 text-gray-900 dark:text-heading">매매 일지 및 분석 대시보드</h1>
+            <h1 class="text-4xl font-bold mb-2">매매 일지 및 분석 대시보드</h1>
             <p class="text-lg text-gray-700 dark:text-secondary">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
             <div id="authButtons" class="flex justify-center gap-4 mt-4">
                 <button id="googleSignInBtn" onclick="signInWithGoogle()" class="bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors hidden">
@@ -2170,10 +2189,10 @@
                 <h3 class="text-lg font-semibold">매매 기록 삭제 확인</h3>
                 <button id="confirmModalClose" class="modal-close text-2xl leading-none">&times;</button>
             </div>
-            <p class="mb-6">정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
+            <p id="confirmModalMessage" class="mb-6">정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</p>
             <div class="flex justify-end gap-3">
                 <button id="cancelDelete" class="btn-secondary px-4 py-2">취소</button>
-                <button id="confirmDelete" class="btn-danger px-4 py-2">삭제</button>
+                <button id="confirmActionButton" class="btn-danger px-4 py-2">삭제</button>
             </div>
         </div>
     </div>
