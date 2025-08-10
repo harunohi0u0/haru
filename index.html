@@ -16,7 +16,8 @@
     <!-- Firebase SDK (v9 호환) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // signInWithPopup 대신 signInWithRedirect 사용, 로그인 후 결과 처리를 위해 getRedirectResult 추가
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signOut, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, updateDoc, addDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // 전역 변수 선언 (스코프 밖에서 접근 가능하도록)
@@ -66,14 +67,16 @@
         const googleProvider = new GoogleAuthProvider();
         window.signInWithGoogle = async function() {
             try {
-                // signInWithPopup을 사용하여 팝업으로 로그인
-                const result = await signInWithPopup(window.auth, googleProvider);
-                // 로그인이 성공하면 onAuthStateChanged 리스너가 사용자 정보를 업데이트합니다.
-                console.log("Google 로그인 성공:", result.user);
+                // signInWithPopup 대신 signInWithRedirect 사용
+                // signInWithRedirect는 팝업을 차단하는 브라우저에서 더 안정적입니다.
+                // 이 함수는 사용자 브라우저를 Google 로그인 페이지로 리다이렉트합니다.
+                // 로그인 성공 후에는 getRedirectResult로 결과를 받아야 합니다.
+                await signInWithRedirect(window.auth, googleProvider);
+                console.log("Google 로그인 리다이렉트 시작...");
+                // 이 시점에서 페이지는 리다이렉트되므로, 여기 이하의 코드는 실행되지 않습니다.
             } catch (error) {
-                console.error("Google 로그인 실패:", error);
+                console.error("Google 로그인 리다이렉트 실패:", error);
                 const errorMessage = error.message;
-                // 사용자에게 오류 메시지 표시
                 document.getElementById('statusMessage').textContent = `Google 로그인 실패: ${errorMessage}`;
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
@@ -102,15 +105,16 @@
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Canvas 환경에서 제공되는 앱 ID
         // Firebase 콘솔 (project settings -> General -> Your apps)에서 복사한 실제 Firebase 프로젝트 구성입니다.
-        // 이 부분을 정확히 채우지 않으면 로그인 및 데이터 저장/삭제 기능이 작동하지 않습니다.
+        // 이 부분을 **반드시** 선생님의 실제 Firebase 프로젝트 설정으로 업데이트해주세요!
+        // 이 정보가 올바르지 않으면 로그인 및 데이터 저장/삭제 기능이 작동하지 않습니다.
         const firebaseConfig = {
-            apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM",
-            authDomain: "future-futures-0u0.firebaseapp.com",
-            projectId: "future-futures-0u0",
-            storageBucket: "future-futures-0u0.firebasestorage.app",
-            messagingSenderId: "591254718769",
-            appId: "1:591254718769:web:45eccbfb9b6ed922fc4810",
-            measurementId: "G-6RGPM8RZGG"
+            apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // 실제 Firebase API Key로 변경하세요
+            authDomain: "future-futures-0u0.firebaseapp.com", // 실제 Auth Domain으로 변경하세요
+            projectId: "future-futures-0u0", // 실제 Project ID로 변경하세요
+            storageBucket: "future-futures-0u0.firebasestorage.app", // 실제 Storage Bucket으로 변경하세요
+            messagingSenderId: "591254718769", // 실제 Messaging Sender ID로 변경하세요
+            appId: "1:591254718769:web:45eccbfb9b6ed922fc4810", // 실제 App ID로 변경하세요
+            measurementId: "G-6RGPM8RZGG" // 실제 Measurement ID로 변경하세요
         };
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Canvas 환경에서 제공되는 초기 인증 토큰
 
@@ -132,6 +136,20 @@
                 window.firebaseApp = initializeApp(firebaseConfig);
                 window.db = getFirestore(window.firebaseApp);
                 window.auth = getAuth(window.firebaseApp);
+
+                // 리다이렉트 로그인 결과 처리
+                // 사용자가 Google에서 로그인한 후 앱으로 돌아올 때 이 부분이 실행됩니다.
+                const result = await getRedirectResult(window.auth);
+                if (result) {
+                    // 로그인 성공! result.user에서 사용자 정보를 얻을 수 있습니다.
+                    console.log("Google 리다이렉트 로그인 성공:", result.user);
+                    document.getElementById('statusMessage').textContent = 'Google 로그인 성공!';
+                    document.getElementById('statusMessage').classList.remove('hidden');
+                    document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-red-200');
+                    document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
+                    setTimeout(() => { document.getElementById('statusMessage').classList.add('hidden'); }, 3000);
+                }
+
 
                 onAuthStateChanged(window.auth, async (user) => {
                     if (user) {
@@ -157,7 +175,8 @@
                         loadCustomTags(); // 사용자 정의 태그 로드
                         // 데이터 로딩 성공 또는 로그인 상태 변경 시 로딩 스피너 및 메시지 숨김
                         document.getElementById('loadingSpinner').classList.add('hidden');
-                        document.getElementById('statusMessage').classList.add('hidden');
+                        // 메시지가 성공적으로 표시된 후에는 hidden으로 설정
+                        // document.getElementById('statusMessage').classList.add('hidden'); // getRedirectResult에서 처리하거나, 상태 변화에 따라 다른 메시지가 필요할 수 있으므로 주석 처리
 
                         // Initial setup for report period display based on default checked radio
                         // Ensure month selector is visible by default
@@ -197,10 +216,12 @@
 
                 // For Canvas runtime, try signing in with the provided token if available
                 if (initialAuthToken) {
+                    // Canvas 환경에서만 __initial_auth_token이 제공됩니다.
+                    // 웹 배포 환경에서는 이 코드가 실행되지 않습니다.
                     await signInWithCustomToken(window.auth, initialAuthToken);
                     console.log("Canvas initial auth token login successful.");
                 } else {
-                    // For direct web access or if no initial token, UI waits for explicit sign-in
+                    // 직접 웹 접속 또는 초기 토큰이 없는 경우, 명시적인 사용자 로그인을 기다립니다.
                     console.log("No initial auth token. Waiting for explicit user login.");
                 }
 
@@ -501,13 +522,15 @@
             predefinedFailureFactors.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`; // Corrected: Used ${factor} instead of ${tag}
+                // 템플릿 리터럴을 문자열 연결로 변경 (구문 오류 우회 시도)
+                label.innerHTML = '<input type="checkbox" name="failureFactor" value="' + factor + '" class="mr-2">' + factor;
                 failureFactorsContainer.appendChild(label);
             });
             window.customFailureFactorsTags.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`; // Corrected: Used ${factor} instead of ${tag}
+                // 템플릿 리터럴을 문자열 연결로 변경 (구문 오류 우회 시도)
+                label.innerHTML = '<input type="checkbox" name="failureFactor" value="' + factor + '" class="mr-2">' + factor;
                 failureFactorsContainer.appendChild(label);
             });
             failureFactorsContainer.appendChild(document.createElement('div')).className = "mb-4 col-span-full"; // Added col-span-full
@@ -736,10 +759,11 @@
 
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Set default entry date to today
-            initializeCharts(); // 차트 초기화는 색상 업데이트보다 먼저!
+            // Firebase 초기화는 다른 모든 UI 로직보다 먼저 호출
+            initializeFirebase(); 
+            initializeCharts(); // 차트 초기화는 Firebase 초기화 후 호출 (데이터 종속성 고려)
             updateChartColors(savedTheme === 'dark'); // 다크 모드 초기화 후 차트 색상 업데이트
             updateResultFieldRequirements(); // Set initial required status
-            initializeFirebase(); // Firebase 초기화
 
             // Add event listener for exchange rate input
             const exchangeRateInput = document.getElementById('exchangeRateInput');
@@ -1418,10 +1442,10 @@
                 stopLossPrice: parseFloat(document.getElementById('stopLossPrice').value) || null,
                 targetPrice: parseFloat(document.getElementById('targetPrice').value) || null,
                 half: parseFloat(document.getElementById('half').value) || null,
-                weight: parseFloat(document.getElementById('weight').value),
+                weight: parseFloat(document.getElementById('weight').value), // 괄호 오타 수정됨
                 exitDate: document.getElementById('exitDate').value || null,
                 psychology: Array.from(document.querySelectorAll('input[name="psychology"]:checked')).map(cb => cb.value),
-                entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis']:checked')).map(cb => cb.value),
+                entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis"]:checked')).map(cb => cb.value),
                 resultOutcome: resultOutcomeSelect.value,
                 rRatio: parseFloat(rRatioInput.value) || null,
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
@@ -2227,4 +2251,3 @@
     </div>
 </body>
 </html>
-
