@@ -103,11 +103,11 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Canvas 환경에서 제공되는 앱 ID
         // 사용자의 실제 Firebase 프로젝트 구성으로 아래 firebaseConfig 객체를 업데이트하세요.
         // Firebase 콘솔 (project settings -> General -> Your apps)에서 확인 가능합니다.
-        // **이 부분을 정확히 채우지 않으면 로그인 및 데이터 저장/삭제 기능이 작동하지 않습니다.**
+        // **이 부분을 정확히 채우지 않으면 로그인 및 데이터 저장 기능이 작동하지 않습니다.**
         const firebaseConfig = {
-          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // <<< **여기를 실제 API Key로 변경해주세요!**
-          authDomain: "future-futures-0u0.firebaseapp.com", // <<< **여기를 실제 Auth Domain으로 변경해주세요!**
-          projectId: "future-futures-0u0", // <<< **여기를 실제 Project ID로 변경해주세요!**
+          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // <<< 실제 API Key로 변경
+          authDomain: "future-futures-0u0.firebaseapp.com", // <<< 실제 Auth Domain으로 변경
+          projectId: "future-futures-0u0", // <<< 실제 Project ID로 변경
           storageBucket: "future-futures-0u0.firebasestorage.app",
           messagingSenderId: "591254718769",
           appId: "1:591254718769:web:45eccbfb9b6ed922fc4810",
@@ -117,9 +117,9 @@
 
         // Firebase 초기화 및 인증
         async function initializeFirebase() {
-            console.log("Firebase 초기화 중...");
-            // Firebase 설정의 필수 필드가 비어있거나 플레이스홀더 값인 경우 경고 메시지 표시
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM" || // 변경된 부분: YOUR_API_KEY 대신 기존 플레이스홀더 값으로 비교
+            console.log("Initializing Firebase...");
+            // 사용자에게 Firebase 설정 업데이트를 강력히 권장하는 메시지 (원래 코드 주석 유지)
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM" ||
                 !firebaseConfig.authDomain || firebaseConfig.authDomain === "future-futures-0u0.firebaseapp.com" ||
                 !firebaseConfig.projectId || firebaseConfig.projectId === "future-futures-0u0") {
                 console.error("Firebase 초기화 실패: Firebase 설정 정보가 올바르지 않습니다. 코드를 확인하고 실제 Firebase 프로젝트 설정으로 업데이트해주세요.");
@@ -1210,7 +1210,6 @@
 
 
                 const row = document.createElement('tr');
-                // Re-added text-gray-800 dark:text-gray-200 to td elements as per user's request
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.date}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">${trade.exitDate || '-'}</td>
@@ -1409,7 +1408,7 @@
                 resultOutcome: resultOutcomeSelect.value,
                 rRatio: parseFloat(rRatioInput.value) || null,
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
-                pnlCurrency: document.querySelector('input[name="pnlCurrency"]:checked')?.value || 'KRW', // ADDED: pnlCurrency
+                pnlCurrency: document.querySelector('input[name="pnlCurrency']:checked')?.value || 'KRW', // ADDED: pnlCurrency
                 exitReason: exitReasonSelect.value || null,
                 successFactors: Array.from(document.querySelectorAll('input[name="successFactor"]:checked')).map(cb => cb.value), // 성공 요인 저장
                 failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor"]:checked')).map(cb => cb.value), // 실패 요인 저장
@@ -1782,7 +1781,7 @@
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid var(--table-border-color); /* Use custom variable for border-bottom */
-            /* Removed custom color here, rely on Tailwind or specific dark:text-gray-200 class */
+            color: var(--text-primary); /* This will be #f0f0f0 in dark mode */
             transition: border-color 0.3s, color 0.3s;
         }
         tr:hover {
