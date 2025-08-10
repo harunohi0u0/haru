@@ -1387,10 +1387,14 @@
         // Handle actual delete logic
         window.deleteTrade = async function(tradeId) {
             console.log(`[deleteTrade] Attempting to delete trade with ID: ${tradeId}`);
+            console.log(`[deleteTrade] window.db:`, window.db);
+            console.log(`[deleteTrade] window.currentUserId:`, window.currentUserId);
+            console.log(`[deleteTrade] window.userTradesCollectionRef:`, window.userTradesCollectionRef);
+
             // Firebase DB, currentUser, userTradesCollectionRef가 모두 유효한지 확인
             if (!window.db || !window.currentUserId || !window.userTradesCollectionRef) {
                 showStatusMessage('데이터베이스가 아직 준비되지 않았거나, 로그인 상태를 확인할 수 없습니다. 잠시 후 다시 시도하거나 로그인해주세요.', 'error');
-                console.error("[deleteTrade] Firebase/User not ready.");
+                console.error("[deleteTrade] Firebase/User or collection reference not ready.");
                 return;
             }
 
@@ -1400,7 +1404,7 @@
             try {
                 // doc 함수에 userTradesCollectionRef와 tradeId를 함께 전달하여 올바른 문서 참조를 생성
                 const tradeDocRef = window.doc(window.userTradesCollectionRef, tradeId);
-                console.log(`[deleteTrade] Document reference created: ${tradeDocRef.path}`);
+                console.log(`[deleteTrade] Attempting to delete document at path: ${tradeDocRef.path}`); // Log the exact path
                 await window.deleteDoc(tradeDocRef);
                 hideLoadingSpinner(); // Hide spinner on success
                 showStatusMessage('매매 기록이 성공적으로 삭제되었습니다!', 'success');
@@ -1410,7 +1414,14 @@
             } catch (error) {
                 hideLoadingSpinner(); // Hide spinner on error
                 console.error("[deleteTrade] 기록 삭제 실패:", error);
-                showStatusMessage(`매매 기록 삭제 실패: ${error.message}. Firebase 콘솔에서 보안 규칙과 로그인 상태를 확인해주세요.`, 'error');
+                // Check for specific error types if possible
+                if (error.code === 'permission-denied') {
+                    showStatusMessage(`매매 기록 삭제 실패: 권한이 없습니다. Firebase 보안 규칙을 확인해주세요.`, 'error');
+                } else if (error.code === 'not-found') {
+                    showStatusMessage(`매매 기록 삭제 실패: 해당 기록을 찾을 수 없습니다.`, 'error');
+                } else {
+                    showStatusMessage(`매매 기록 삭제 실패: ${error.message}.`, 'error');
+                }
             }
         };
 
