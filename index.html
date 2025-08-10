@@ -838,7 +838,7 @@
                         max: 100,
                         ticks: {
                             callback: function(value) { return value + '%'; },
-                            color: initialTextColor // Will be dynamically set by updateChartColors
+                            color: initialTextColor // Will be dynamically set by updateChartcolors
                         },
                         grid: {
                             display: true,
@@ -848,7 +848,7 @@
                     },
                     x: {
                         ticks: {
-                            color: initialTextColor, // Will be dynamically set by updateChartColors
+                            color: initialTextColor, // Will be dynamically set by updateChartcolors
                             callback: function(value, index, values) { return wrapLabel(this.getLabelForValue(value), 16); },
                             autoSkip: false,
                             maxRotation: 45,
@@ -1762,8 +1762,11 @@
         th {
             background-color: var(--table-header-bg);
             font-weight: 600;
-            color: var(--text-secondary);
+            color: var(--text-secondary); /* Changed this from dark:text-gray-300 to dynamic variable */
             transition: background-color 0.3s, color 0.3s;
+        }
+        .dark-mode th {
+            color: var(--text-primary); /* Ensure table headers are visible in dark mode */
         }
         td {
             padding: 0.75rem;
