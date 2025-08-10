@@ -262,6 +262,8 @@
                     fetchedTrades.push({ id: doc.id, ...doc.data() });
                 });
                 window.trades = fetchedTrades; // 전역 trades 변수 업데이트
+                // 페이지네이션 및 정렬을 고려하여 renderTradeHistory 호출
+                window.currentPage = 1; // 데이터 업데이트 시 첫 페이지로 리셋
                 renderTradeHistory();
                 updateDashboard();
                 updateReports(); // 보고서 업데이트 추가
@@ -673,14 +675,20 @@
                 failureFactorChart.options.plugins.legend.labels.color = resolvedTextColor;
                 failureFactorChart.update();
             }
-            if (tradeDurationWinRateChart) { // NEW: Update trade duration chart colors
+            if (tradeDurationWinRateChart) { // Update trade duration chart colors
                 Object.assign(tradeDurationWinRateChart.options.scales, commonScalesOptions(true).scales);
                 tradeDurationWinRateChart.options.plugins.legend.labels.color = resolvedTextColor;
                 tradeDurationWinRateChart.update();
             }
+            // tradeTypeWinRateChart
+            if (tradeTypeWinRateChart) {
+                Object.assign(tradeTypeWinRateChart.options.scales, commonScalesOptions(true).scales);
+                tradeTypeWinRateChart.options.plugins.legend.labels.color = resolvedTextColor;
+                tradeTypeWinRateChart.update();
+            }
             
             // Chart tooltip text color update
-            [resultBreakdownChart, psychologyImpactChart, entryBasisEffectivenessChart, successFactorChart, failureFactorChart, tradeDurationWinRateChart].forEach(chart => {
+            [resultBreakdownChart, psychologyImpactChart, entryBasisEffectivenessChart, successFactorChart, failureFactorChart, tradeDurationWinRateChart, tradeTypeWinRateChart].forEach(chart => {
                 if (chart && chart.options && chart.options.plugins && chart.options.plugins.tooltip) {
                     chart.options.plugins.tooltip.titleColor = tooltipFontColor;
                     chart.options.plugins.tooltip.bodyColor = tooltipFontColor;
@@ -735,6 +743,14 @@
             if (darkModeToggleBtn) {
                 darkModeToggleBtn.addEventListener('click', window.toggleDarkMode);
             }
+
+            // Pagination button event listeners
+            document.getElementById('prevPageBtn').addEventListener('click', () => {
+                window.goToPage(window.currentPage - 1);
+            });
+            document.getElementById('nextPageBtn').addEventListener('click', () => {
+                window.goToPage(window.currentPage + 1);
+            });
             // --- 수정된 부분 끝 ---
 
 
@@ -767,20 +783,23 @@
         const tradeForm = document.getElementById('tradeForm');
         const tradeHistoryBody = document.getElementById('tradeHistoryBody');
         window.trades = []; // Firebase에서 관리되므로 초기화 시 빈 배열로 시작합니다.
+        window.currentPage = 1; // Current page for pagination
+        window.itemsPerPage = 10; // Number of items per page
 
         // Chart instances, will be initialized in initializeCharts()
         let resultBreakdownChart;
         let psychologyImpactChart;
         let entryBasisEffectivenessChart;
-        let successFactorChart; // Renamed from factorAnalysisChart and split
-        let failureFactorChart; // Added for failure factors
-        let tradeDurationWinRateChart; // NEW: Trade Duration Chart instance
+        let successFactorChart; 
+        let failureFactorChart; 
+        let tradeDurationWinRateChart; 
+        let tradeTypeWinRateChart; 
 
         const resultOutcomeSelect = document.getElementById('resultOutcome');
         const rRatioInput = document.getElementById('rRatio');
-        const pnlAmountInput = document.getElementById('pnlAmount'); // ADDED: PNL input reference
-        const pnlCurrencyKRW = document.getElementById('pnlCurrencyKRW'); // ADDED
-        const pnlCurrencyUSD = document.getElementById('pnlCurrencyUSD'); // ADDED
+        const pnlAmountInput = document.getElementById('pnlAmount'); 
+        const pnlCurrencyKRW = document.getElementById('pnlCurrencyKRW'); 
+        const pnlCurrencyUSD = document.getElementById('pnlCurrencyUSD'); 
         const exitReasonSelect = document.getElementById('exitReason');
         const replayQuestion1Select = document.getElementById('replayQuestion1');
         const replayQuestion2Textarea = document.getElementById('replayQuestion2');
@@ -796,7 +815,6 @@
 
         // Get references to the monthly and quarterly selectors
         const reportMonthSelector = document.getElementById('reportMonthSelector');
-        // const quarterButtonsContainer = document.getElementById('quarterButtonsContainer'); // Removed as per user request
 
 
         // Utility function to wrap long labels
@@ -1066,6 +1084,23 @@
                 },
                 options: commonVerticalBarChartOptions // Reuse common options
             });
+
+            // NEW: Trade Type (매수/매도) Win Rate Chart
+            const tradeTypeWinRateCtx = document.getElementById('tradeTypeWinRateChart').getContext('2d');
+            tradeTypeWinRateChart = new Chart(tradeTypeWinRateCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['매수', '매도'], // Labels for Buy/Sell
+                    datasets: [{
+                        label: '승률 (%)',
+                        data: [0, 0], // Initial data for Buy and Sell win rates
+                        backgroundColor: ['#36A2EB', '#FF6384'], // Blue for Buy, Red for Sell
+                        borderColor: ['#2F8EE4', '#E65375'],
+                        borderWidth: 1
+                    }]
+                },
+                options: commonVerticalBarChartOptions // Reuse common options
+            });
         }
 
         // Update Charts and Summary
@@ -1242,6 +1277,26 @@
                 tradeDurationWinRateChart.data.datasets[0].data = tradeDurationData;
                 tradeDurationWinRateChart.update();
             }
+
+            // NEW: Trade Type (매수/매도) Win Rate Chart
+            const tradeTypeWinRates = { '매수': { wins: 0, total: 0 }, '매도': { wins: 0, total: 0 } };
+            completedTrades.forEach(trade => {
+                const tradeType = trade.tradeType; // '매수' or '매도'
+                if (tradeTypeWinRates[tradeType]) {
+                    tradeTypeWinRates[tradeType].total++;
+                    if (trade.resultOutcome === '수익') {
+                        tradeTypeWinRates[tradeType].wins++;
+                    }
+                }
+            });
+
+            const buyWinRate = tradeTypeWinRates['매수'].total > 0 ? (tradeTypeWinRates['매수'].wins / tradeTypeWinRates['매수'].total * 100).toFixed(2) : 0;
+            const sellWinRate = tradeTypeWinRates['매도'].total > 0 ? (tradeTypeWinRates['매도'].wins / tradeTypeWinRates['매도'].total * 100).toFixed(2) : 0;
+
+            if (tradeTypeWinRateChart) {
+                tradeTypeWinRateChart.data.datasets[0].data = [buyWinRate, sellWinRate];
+                tradeTypeWinRateChart.update();
+            }
         }
 
         // Render Trade History Table
@@ -1250,8 +1305,15 @@
             if (!window.trades) {
                 return;
             }
-            window.trades.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
-            window.trades.forEach(trade => {
+            // Sort by date ascending (oldest first)
+            const sortedTrades = [...window.trades].sort((a, b) => new Date(a.date) - new Date(b.date)); 
+
+            // Calculate pagination
+            const startIndex = (window.currentPage - 1) * window.itemsPerPage;
+            const endIndex = startIndex + window.itemsPerPage;
+            const tradesToDisplay = sortedTrades.slice(startIndex, endIndex);
+
+            tradesToDisplay.forEach(trade => {
                 let holdingPeriod = '';
                 if (trade.date && trade.exitDate && trade.resultOutcome !== '진행 중') {
                     const entry = new Date(trade.date);
@@ -1276,20 +1338,18 @@
 
 
                 const row = document.createElement('tr');
-                // Removed all Tailwind bg-white, dark:bg-gray-800, divide-gray-200, dark:divide-gray-700 classes from table and cells
-                // Replaced with custom CSS for table borders and cell colors
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.date}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.exitDate || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${holdingPeriod || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.stockName}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.tradeType}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.tradeDuration || '-'}</td> <!-- NEW: Display Trade Duration -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.tradeDuration || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.resultOutcome}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
                     <td class="px-6 py-4 text-sm">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
                     <td class="px-6 py-4 text-sm">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${displayPnl}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editTrade('${trade.id}')" class="text-indigo-600 hover:text-indigo-900 ml-2 dark:text-indigo-400 dark:hover:text-indigo-200">수정</button>
                         <button onclick="showCustomConfirmationModal('정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', () => deleteTrade('${trade.id}'))" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
@@ -1297,7 +1357,26 @@
                 `;
                 tradeHistoryBody.appendChild(row);
             });
+            updatePaginationControls(); // Update pagination buttons after rendering
         }
+
+        // Pagination controls update
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(window.trades.length / window.itemsPerPage);
+            document.getElementById('pageInfo').textContent = `페이지 ${window.currentPage} / ${totalPages || 1}`;
+            document.getElementById('prevPageBtn').disabled = window.currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = window.currentPage === totalPages || window.trades.length === 0;
+        }
+
+        // Go to specific page
+        window.goToPage = function(pageNumber) {
+            const totalPages = Math.ceil(window.trades.length / window.itemsPerPage);
+            if (pageNumber >= 1 && pageNumber <= totalPages) {
+                window.currentPage = pageNumber;
+                renderTradeHistory();
+            }
+        }
+
 
         // Function to populate form for editing
         window.editTrade = function(tradeId) {
@@ -1363,8 +1442,8 @@
 
             resultOutcomeSelect.value = tradeToEdit.resultOutcome;
             rRatioInput.value = tradeToEdit.rRatio || '';
-            pnlAmountInput.value = tradeToEdit.pnlAmount || ''; // ADDED: Populate PNL amount
-            // ADDED: Populate PNL currency
+            pnlAmountInput.value = tradeToEdit.pnlAmount || ''; 
+            // Populate PNL currency
             if (tradeToEdit.pnlCurrency === 'USD') {
                 pnlCurrencyUSD.checked = true;
             } else {
@@ -1434,20 +1513,20 @@
             const isCompleted = resultOutcomeSelect.value !== '진행 중';
 
             rRatioInput.required = isCompleted;
-            pnlAmountInput.required = isCompleted; // ADDED: PNL input required
-            pnlCurrencyKRW.required = isCompleted; // Make currency required too
-            pnlCurrencyUSD.required = isCompleted; // Make currency required too
+            pnlAmountInput.required = isCompleted; 
+            pnlCurrencyKRW.required = isCompleted; 
+            pnlCurrencyUSD.required = isCompleted; 
             exitReasonSelect.required = isCompleted;
             replayQuestion1Select.required = isCompleted;
 
             rRatioInput.placeholder = isCompleted ? "예: 1.5 (수익), 0.8 (손절)" : "진행 중인 매매는 선택 사항";
-            pnlAmountInput.placeholder = isCompleted ? "예: 50.00 (수익), -25.50 (손실)" : "진행 중인 매매는 선택 사항"; // ADDED: PNL placeholder
+            pnlAmountInput.placeholder = isCompleted ? "예: 50.00 (수익), -25.50 (손실)" : "진행 중인 매매는 선택 사항"; 
             exitReasonSelect.querySelector('option[value=""]').textContent = isCompleted ? "선택하세요" : "진행 중인 매매는 선택 사항";
             replayQuestion1Select.querySelector('option[value=""]').textContent = isCompleted ? "선택하세요" : "진행 중인 매매는 선택 사항";
 
             if (!isCompleted && currentEditingTradeId === null) {
                 rRatioInput.value = '';
-                pnlAmountInput.value = ''; // ADDED: Clear PNL input
+                pnlAmountInput.value = ''; 
                 pnlCurrencyKRW.checked = true; // Default to KRW for new entries
                 pnlCurrencyUSD.checked = false;
                 exitReasonSelect.value = '';
@@ -1478,7 +1557,7 @@
                 date: document.getElementById('date').value,
                 stockName: document.getElementById('stockName').value,
                 tradeType: document.querySelector('input[name="tradeType"]:checked').value,
-                tradeDuration: document.querySelector('input[name="tradeDuration"]:checked').value, // NEW: Add tradeDuration
+                tradeDuration: document.querySelector('input[name="tradeDuration"]:checked').value, 
                 entryPrice: parseFloat(document.getElementById('entryPrice').value),
                 stopLossPrice: parseFloat(document.getElementById('stopLossPrice').value) || null,
                 targetPrice: parseFloat(document.getElementById('targetPrice').value) || null,
@@ -1489,11 +1568,11 @@
                 entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis"]:checked')).map(cb => cb.value),
                 resultOutcome: resultOutcomeSelect.value,
                 rRatio: parseFloat(rRatioInput.value) || null,
-                pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
-                pnlCurrency: document.querySelector('input[name="pnlCurrency"]:checked')?.value || 'KRW', // ADDED: pnlCurrency
+                pnlAmount: parseFloat(pnlAmountInput.value) || null, 
+                pnlCurrency: document.querySelector('input[name="pnlCurrency"]:checked')?.value || 'KRW', 
                 exitReason: exitReasonSelect.value || null,
-                successFactors: Array.from(document.querySelectorAll('input[name="successFactor"]:checked')).map(cb => cb.value), // 성공 요인 저장
-                failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor"]:checked')).map(cb => cb.value), // 실패 요인 저장
+                successFactors: Array.from(document.querySelectorAll('input[name="successFactor"]:checked')).map(cb => cb.value), 
+                failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor"]:checked')).map(cb => cb.value), 
                 replayQuestion1: replayQuestion1Select.value || null,
                 replayQuestion2: replayQuestion2Textarea.value || null,
                 replayQuestion3: parseInt(replayQuestion3Input.value) || null,
@@ -1515,7 +1594,7 @@
                 document.getElementById('exitDate').value = ''; // Clear exit date
                 pnlCurrencyKRW.checked = true; // Reset currency to default KRW
                 pnlCurrencyUSD.checked = false;
-                // NEW: Reset trade duration radios
+                // Reset trade duration radios
                 document.getElementById('tradeDurationDay').checked = true; // Default to Day
                 document.getElementById('tradeDurationSwing').checked = false;
                 document.getElementById('tradeDurationLongTerm').checked = false;
@@ -1558,8 +1637,8 @@
                 document.getElementById('reportTotalTrades').textContent = formatNumberWithCommas(0);
                 document.getElementById('reportWinRate').textContent = '0.00%';
                 document.getElementById('reportAvgRR').textContent = formatNumberWithCommas(0);
-                document.getElementById('reportTotalUSDPNL').textContent = '0.00 $'; // Updated ID
-                document.getElementById('reportTotalKRWPNL').textContent = '0.00 ₩'; // Updated ID
+                document.getElementById('reportTotalUSDPNL').textContent = '0.00 $'; 
+                document.getElementById('reportTotalKRWPNL').textContent = '0.00 ₩'; 
                 return;
             }
 
@@ -1616,8 +1695,8 @@
             document.getElementById('reportTotalTrades').textContent = formatNumberWithCommas(totalTrades);
             document.getElementById('reportWinRate').textContent = `${totalTrades > 0 ? (winTrades / totalTrades * 100).toFixed(2) : 0.00}%`;
             document.getElementById('reportAvgRR').textContent = formatNumberWithCommas(totalTrades > 0 ? (totalRR / totalTrades).toFixed(2) : 0.00);
-            document.getElementById('reportTotalUSDPNL').textContent = `${formatNumberWithCommas(totalUSDPNL.toFixed(2))} $`; // Format with USD
-            document.getElementById('reportTotalKRWPNL').textContent = `${formatNumberWithCommas(totalKRWPNL.toFixed(2))} ₩`; // Format with KRW
+            document.getElementById('reportTotalUSDPNL').textContent = `${formatNumberWithCommas(totalUSDPNL.toFixed(2))} $`; 
+            document.getElementById('reportTotalKRWPNL').textContent = `${formatNumberWithCommas(totalKRWPNL.toFixed(2))} ₩`; 
         }
 
     </script>
@@ -1914,7 +1993,7 @@
     </style>
 </head>
 <body class="p-4">
-    <div class="container rounded-2xl shadow-lg p-6 md:p-8"> <!-- Removed bg-white here -->
+    <div class="container rounded-2xl shadow-lg p-6 md:p-8">
         <header class="text-center mb-8 rounded-xl p-4">
             <h1 class="text-4xl font-bold mb-2">매매 일지 및 분석 대시보드</h1>
             <p class="text-lg text-gray-700 dark:text-secondary">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
@@ -2167,7 +2246,7 @@
         <section id="trade-history" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 기록 히스토리</h2>
             <p class="text-sm mb-6">여기에 당신이 기록한 모든 매매 내역이 최신순으로 표시됩니다. 각 매매의 주요 정보를 한눈에 확인하고, 전체적인 흐름을 파악할 수 있습니다. '수정' 버튼을 클릭하여 진행 중인 매매를 업데이트하거나 완료할 수 있습니다.</p>
-            <div class="overflow-x-auto rounded-lg"> <!-- Removed Tailwind borders and custom border will be applied below -->
+            <div class="overflow-x-auto rounded-lg">
                 <table class="min-w-full">
                     <thead class="bg-gray-100 dark:bg-gray-800">
                         <tr>
@@ -2175,8 +2254,8 @@
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">청산 날짜</th>
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">보유 기간</th>
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">종목명</th>
-                            <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">유형</th>
-                            <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">매매 기간</th> <!-- NEW TH -->
+                            <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">유형 (롱/숏)</th> <!-- Updated column header -->
+                            <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">매매 기간 (단기/스윙/장기)</th> <!-- Updated column header -->
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">결과</th>
                             <th class="px-6 py-3 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">손익비</th>
                             <th class="px-6 py-4 text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-300">심리 태그</th>
@@ -2190,13 +2269,19 @@
                     </tbody>
                 </table>
             </div>
+            <!-- Pagination Controls -->
+            <div class="flex justify-center mt-6 gap-4 items-center">
+                <button id="prevPageBtn" class="btn-secondary px-4 py-2">이전</button>
+                <span id="pageInfo" class="py-2 text-gray-700 dark:text-gray-300">페이지 1 / 1</span>
+                <button id="nextPageBtn" class="btn-secondary px-4 py-2">다음</button>
+            </div>
         </section>
 
         <section id="analysis-dashboard" class="rounded-xl shadow p-6 mb-10">
             <h2 class="text-2xl font-semibold mb-6">매매 분석 대시보드</h2>
             <p class="text-sm mb-6">기록된 매매 데이터를 바탕으로 당신의 트레이딩 패턴과 심리, 진입 근거의 영향을 시각적으로 분석합니다. 차트를 통해 어떤 요소들이 당신의 매매 결과에 영향을 미치는지 파악하고 개선점을 찾을 수 있습니다.</p>
 
-            <div class="grid grid-cols-1 gap-8"> <!-- Changed to single column grid -->
+            <div class="grid grid-cols-1 gap-8">
                 <!-- Overall Performance -->
                 <div class="rounded-xl shadow p-6 flex flex-col items-center justify-center text-center">
                     <h3 class="text-xl font-medium mb-4">전체 매매 성과 요약</h3>
@@ -2235,13 +2320,19 @@
                     <canvas id="entryBasisEffectivenessChart"></canvas>
                 </div>
 
-                <!-- NEW: Trade Duration Win Rate Chart -->
+                <!-- Trade Duration Win Rate Chart -->
                 <div class="chart-container">
                     <h3 class="text-xl font-medium mb-4 text-center">매매 기간별 승률</h3>
                     <p class="text-sm mb-4 text-center">매매 기간 (데이, 스윙, 장기)에 따른 승률을 비교합니다.</p>
                     <canvas id="tradeDurationWinRateChart"></canvas>
                 </div>
-                <!-- END NEW -->
+
+                <!-- Trade Type (매수/매도) Win Rate Chart -->
+                <div class="chart-container">
+                    <h3 class="text-xl font-medium mb-4 text-center">매수/매도 유형별 승률</h3>
+                    <p class="text-sm mb-4 text-center">매수(롱) 및 매도(숏) 포지션에 대한 각각의 승률을 분석합니다.</p>
+                    <canvas id="tradeTypeWinRateChart"></canvas>
+                </div>
 
                 <!-- Success Factor Chart (Separated) -->
                 <div class="chart-container">
