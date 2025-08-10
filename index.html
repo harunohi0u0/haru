@@ -118,7 +118,6 @@
         async function initializeFirebase() {
             console.log("Initializing Firebase...");
             // Firebase 설정이 제대로 되어있는지 한 번 더 확인합니다.
-            // NOTE: YOUR_API_KEY 등의 플레이스홀더 체크는 이제 실제 값이 있으므로 불필요하며, 제거되었습니다.
             if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
                 console.error("Firebase 초기화 실패: Firebase 설정 정보가 올바르지 않습니다.");
                 document.getElementById('statusMessage').textContent = 'Firebase 초기화 오류: 프로젝트 설정이 누락되었거나 올바르지 않습니다. 코드를 확인하고 Firebase 콘솔에서 복사한 실제 설정으로 업데이트해주세요.';
@@ -293,7 +292,7 @@
                 }, { merge: true }); // 기존 필드는 유지하면서 병합
                 document.getElementById('statusMessage').textContent = '태그가 성공적으로 저장되었습니다!';
                 document.getElementById('statusMessage').classList.remove('hidden');
-                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-red-100', 'border-green-200');
+                document.getElementById('statusMessage').classList.remove('text-red-600', 'bg-green-100', 'border-green-200');
                 document.getElementById('statusMessage').classList.add('text-green-600', 'bg-green-100', 'border-green-200');
             } catch (error) {
                 console.error("태그 저장 실패:", error);
@@ -502,13 +501,13 @@
             predefinedFailureFactors.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`;
+                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`; // Corrected: Used ${factor} instead of ${tag}
                 failureFactorsContainer.appendChild(label);
             });
             window.customFailureFactorsTags.forEach(factor => {
                 const label = document.createElement('label');
                 label.className = "block text-gray-600 dark:text-gray-300";
-                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${tag}`;
+                label.innerHTML = `<input type="checkbox" name="failureFactor" value="${factor}" class="mr-2">${factor}`; // Corrected: Used ${factor} instead of ${tag}
                 failureFactorsContainer.appendChild(label);
             });
             failureFactorsContainer.appendChild(document.createElement('div')).className = "mb-4 col-span-full"; // Added col-span-full
@@ -717,6 +716,23 @@
                 }
                 hideCustomConfirmationModal();
             });
+
+            // --- 이벤트 리스너를 동적으로 연결하도록 수정된 부분 ---
+            const googleSignInBtn = document.getElementById('googleSignInBtn');
+            if (googleSignInBtn) {
+                googleSignInBtn.addEventListener('click', window.signInWithGoogle);
+            }
+
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', window.signOutUser);
+            }
+
+            const darkModeToggleBtn = document.getElementById('darkModeToggle');
+            if (darkModeToggleBtn) {
+                darkModeToggleBtn.addEventListener('click', window.toggleDarkMode);
+            }
+            // --- 수정된 부분 끝 ---
 
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0]; // Set default entry date to today
@@ -1411,7 +1427,7 @@
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
                 pnlCurrency: document.querySelector('input[name="pnlCurrency']:checked')?.value || 'KRW', // ADDED: pnlCurrency
                 exitReason: exitReasonSelect.value || null,
-                successFactors: Array.from(document.querySelectorAll('input[name="successFactor"]:checked')).map(cb => cb.value), // 성공 요인 저장
+                successFactors: Array.from(document.querySelectorAll('input[name="successFactor']:checked')).map(cb => cb.value), // 성공 요인 저장
                 failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor']:checked')).map(cb => cb.value), // 실패 요인 저장
                 replayQuestion1: replayQuestion1Select.value || null,
                 replayQuestion2: replayQuestion2Textarea.value || null,
@@ -1841,15 +1857,15 @@
             <h1 class="text-4xl font-bold mb-2">매매 일지 및 분석 대시보드</h1>
             <p class="text-lg text-gray-700 dark:text-secondary">당신의 매매 기록을 체계적으로 관리하고 심리, 근거, 결과 간의 상관관계를 분석하세요.</p>
             <div id="authButtons" class="flex justify-center gap-4 mt-4">
-                <button id="googleSignInBtn" onclick="signInWithGoogle()" class="bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors hidden">
+                <button id="googleSignInBtn" class="bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors hidden">
                     구글 로그인
                 </button>
-                <button id="signOutBtn" onclick="signOutUser()" class="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors hidden">
+                <button id="signOutBtn" class="bg-red-500 text-white py-2 px-4 rounded-lg shadow hover:bg-red-600 transition-colors hidden">
                     로그아웃
                 </button>
             </div>
             <div id="userIdDisplay" class="text-sm text-gray-500 mt-2 dark:text-secondary">사용자: 로딩 중...</div>
-            <button id="darkModeToggle" onclick="toggleDarkMode()" class="mt-4 py-2 px-4 rounded-lg shadow">
+            <button id="darkModeToggle" class="mt-4 py-2 px-4 rounded-lg shadow">
                 다크 모드 토글
             </button>
         </header>
@@ -1981,7 +1997,6 @@
                             <div class="checkbox-group mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2"> 
                                 <div id="successFactorsCheckboxes" class="contents"> 
                                     <!-- Success factors will be dynamically inserted here by JS -->
-                                    <!-- 이전 코드에 잘못 포함되었던 '}' 문자를 제거했습니다. -->
                                 </div>
                             </div>
 
@@ -1989,7 +2004,6 @@
                             <div class="checkbox-group grid grid-cols-1 sm:grid-cols-2 gap-2"> 
                                 <div id="failureFactorsCheckboxes" class="contents"> 
                                     <!-- Failure factors will be dynamically inserted here by JS -->
-                                    <!-- 이전 코드에 잘못 포함되었던 '}' 문자를 제거했습니다. -->
                                 </div>
                             </div>
                         </div>
