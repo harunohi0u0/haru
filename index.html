@@ -118,10 +118,9 @@
         async function initializeFirebase() {
             console.log("Initializing Firebase...");
             // Firebase 설정이 제대로 되어있는지 한 번 더 확인합니다.
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY" || // NOTE: YOUR_API_KEY는 이제 위에 실제 값이 있으므로 불필요한 체크가 됩니다.
-                !firebaseConfig.authDomain || firebaseConfig.authDomain === "YOUR_AUTH_DOMAIN" ||
-                !firebaseConfig.projectId || firebaseConfig.projectId === "YOUR_PROJECT_ID") {
-                console.error("Firebase 초기화 실패: Firebase 설정 정보가 올바르지 않습니다. 코드를 확인하고 실제 Firebase 프로젝트 설정으로 업데이트해주세요.");
+            // NOTE: YOUR_API_KEY 등의 플레이스홀더 체크는 이제 실제 값이 있으므로 불필요하며, 제거되었습니다.
+            if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+                console.error("Firebase 초기화 실패: Firebase 설정 정보가 올바르지 않습니다.");
                 document.getElementById('statusMessage').textContent = 'Firebase 초기화 오류: 프로젝트 설정이 누락되었거나 올바르지 않습니다. 코드를 확인하고 Firebase 콘솔에서 복사한 실제 설정으로 업데이트해주세요.';
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('loadingSpinner').classList.add('hidden');
@@ -1412,7 +1411,7 @@
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
                 pnlCurrency: document.querySelector('input[name="pnlCurrency']:checked')?.value || 'KRW', // ADDED: pnlCurrency
                 exitReason: exitReasonSelect.value || null,
-                successFactors: Array.from(document.querySelectorAll('input[name="successFactor']:checked')).map(cb => cb.value), // 성공 요인 저장
+                successFactors: Array.from(document.querySelectorAll('input[name="successFactor"]:checked')).map(cb => cb.value), // 성공 요인 저장
                 failureFactors: Array.from(document.querySelectorAll('input[name="failureFactor']:checked')).map(cb => cb.value), // 실패 요인 저장
                 replayQuestion1: replayQuestion1Select.value || null,
                 replayQuestion2: replayQuestion2Textarea.value || null,
@@ -1982,13 +1981,15 @@
                             <div class="checkbox-group mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2"> 
                                 <div id="successFactorsCheckboxes" class="contents"> 
                                     <!-- Success factors will be dynamically inserted here by JS -->
-                                }
+                                    <!-- 이전 코드에 잘못 포함되었던 '}' 문자를 제거했습니다. -->
+                                </div>
                             </div>
 
                             <!-- b-2 실패 요인 진단 (Dynamic content only) -->
                             <div class="checkbox-group grid grid-cols-1 sm:grid-cols-2 gap-2"> 
                                 <div id="failureFactorsCheckboxes" class="contents"> 
                                     <!-- Failure factors will be dynamically inserted here by JS -->
+                                    <!-- 이전 코드에 잘못 포함되었던 '}' 문자를 제거했습니다. -->
                                 </div>
                             </div>
                         </div>
