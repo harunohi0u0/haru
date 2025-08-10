@@ -101,11 +101,13 @@
 
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Canvas 환경에서 제공되는 앱 ID
-        // 사용자에게 제공받은 firebaseConfig를 직접 추가합니다.
+        // 사용자의 실제 Firebase 프로젝트 구성으로 아래 firebaseConfig 객체를 업데이트하세요.
+        // Firebase 콘솔 (project settings -> General -> Your apps)에서 확인 가능합니다.
+        // **이 부분을 정확히 채우지 않으면 로그인 및 데이터 저장 기능이 작동하지 않습니다.**
         const firebaseConfig = {
-          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM",
-          authDomain: "future-futures-0u0.firebaseapp.com",
-          projectId: "future-futures-0u0",
+          apiKey: "AIzaSyDtbBNTsYJGIJIrj-V9kqyXXOiHm5u43RM", // <<< 실제 API Key로 변경
+          authDomain: "future-futures-0u0.firebaseapp.com", // <<< 실제 Auth Domain으로 변경
+          projectId: "future-futures-0u0", // <<< 실제 Project ID로 변경
           storageBucket: "future-futures-0u0.firebasestorage.app",
           messagingSenderId: "591254718769",
           appId: "1:591254718769:web:45eccbfb9b6ed922fc4810",
@@ -115,9 +117,10 @@
 
         // Firebase 초기화 및 인증
         async function initializeFirebase() {
-            if (!firebaseConfig || !firebaseConfig.projectId) {
-                console.error("Firebase 초기화 실패: 'projectId'가 Firebase 설정에 제공되지 않았습니다. 환경 변수 '__firebase_config'를 확인해주세요.");
-                document.getElementById('statusMessage').textContent = 'Firebase 초기화 오류: 프로젝트 ID가 누락되었습니다. 환경 설정을 확인해주세요.';
+            console.log("Initializing Firebase...");
+            if (!firebaseConfig || !firebaseConfig.projectId || firebaseConfig.apiKey === "YOUR_API_KEY") { // Check for placeholder
+                console.error("Firebase 초기화 실패: 'projectId' 또는 'apiKey'가 Firebase 설정에 올바르게 제공되지 않았습니다. 환경 변수 '__firebase_config'를 확인하거나, 하드코딩된 값을 업데이트해주세요.");
+                document.getElementById('statusMessage').textContent = 'Firebase 초기화 오류: 프로젝트 설정이 누락되었거나 올바르지 않습니다. 환경 설정을 확인해주세요.';
                 document.getElementById('statusMessage').classList.remove('hidden');
                 document.getElementById('loadingSpinner').classList.add('hidden');
                 document.getElementById('statusMessage').classList.remove('text-green-600', 'bg-green-100', 'border-green-200');
@@ -688,6 +691,7 @@
 
         // Window onload에서 Firebase 초기화 호출
         window.onload = function() {
+            console.log("Window loaded, starting initialization...");
             // 저장된 테마 설정 로드
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
@@ -1206,16 +1210,16 @@
                 // Removed all Tailwind bg-white, dark:bg-gray-800, divide-gray-200, dark:divide-gray-700 classes from table and cells
                 // Replaced with custom CSS for table borders and cell colors
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">.${trade.date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.exitDate || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${holdingPeriod || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.stockName}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.tradeType}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.resultOutcome}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
-                    <td class="px-6 py-4 text-sm text-gray-800">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
-                    <td class="px-6 py-4 text-sm text-gray-800">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.exitDate || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${holdingPeriod || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.stockName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.tradeType}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.resultOutcome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${trade.rRatio !== null ? trade.rRatio : '-'}</td>
+                    <td class="px-6 py-4 text-sm">${Array.isArray(trade.psychology) ? trade.psychology.join(', ') : ''}</td>
+                    <td class="px-6 py-4 text-sm">${Array.isArray(trade.entryBasis) ? trade.entryBasis.join(', ') : ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${displayPnl}</td> <!-- ADDED PNL DISPLAY -->
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button onclick="editTrade('${trade.id}')" class="text-indigo-600 hover:text-indigo-900 ml-2 dark:text-indigo-400 dark:hover:text-indigo-200">수정</button>
                         <button onclick="showCustomConfirmationModal('정말 이 매매 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.', () => deleteTrade('${trade.id}'))" class="text-red-600 hover:text-red-900 ml-2 dark:text-red-400 dark:hover:text-red-200">삭제</button>
@@ -1395,7 +1399,7 @@
                 weight: parseFloat(document.getElementById('weight').value),
                 exitDate: document.getElementById('exitDate').value || null,
                 psychology: Array.from(document.querySelectorAll('input[name="psychology"]:checked')).map(cb => cb.value),
-                entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis']:checked')).map(cb => cb.value),
+                entryBasis: Array.from(document.querySelectorAll('input[name="entryBasis"]:checked')).map(cb => cb.value),
                 resultOutcome: resultOutcomeSelect.value,
                 rRatio: parseFloat(rRatioInput.value) || null,
                 pnlAmount: parseFloat(pnlAmountInput.value) || null, // ADDED: pnlAmount to tradeData
